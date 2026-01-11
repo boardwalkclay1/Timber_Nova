@@ -1,10 +1,25 @@
 // ============================================================
-// TIMBER NOVA – APP JS (FULL ENGINE)
+// TIMBER NOVA – FULL APP JS (CLEAN, MODERN, REBUILT)
+// ============================================================
+//
+// - Modern multi-layer tile engine (street / satellite / terrain / trails)
+// - Smooth pan/zoom, high zoom levels, real tile providers
+// - Weather overlays (radar / wind / storms / temperature)
+// - Radius tool around job site
+// - Route line from current view to job (optional)
+// - Geocoding (mockable – plug in a real service later)
+// - Supply Finder (mock store data, text results only – NO MAP MARKERS)
+// - Parts Finder (mock parts catalog – text results only)
+// - Job View engine (no map pins; just center + overlays + radius/route)
+//
 // ============================================================
 
-// -------------------------------
+
+// ============================================================
+// UI WIRING
+// ============================================================
+
 // Leaf animation init
-// -------------------------------
 function setupLeaves() {
   const leafContainer = document.getElementById("leaf-container");
   if (!leafContainer) return;
@@ -19,10 +34,6 @@ function setupLeaves() {
     leafContainer.appendChild(leaf);
   }
 }
-
-// ============================================================
-// UI WIRING
-// ============================================================
 
 // Smooth scroll for nav + buttons
 function setupScrollLinks() {
@@ -71,7 +82,7 @@ function setupTreeThemeToggle() {
   });
 }
 
-// Weather layer controls
+// Weather layer controls (wired to weatherOverlayEngine)
 function setupWeatherLayerControls() {
   const controlsContainer = document.getElementById("weather-controls");
   if (controlsContainer) {
@@ -94,14 +105,12 @@ function setupWeatherLayerControls() {
     checkbox.addEventListener("change", () => {
       const layer = checkbox.getAttribute("data-weather-layer");
       const enabled = checkbox.checked;
-
       weatherOverlayEngine.setLayerEnabled(layer, enabled);
-      console.log("Weather layer toggle:", layer, "->", enabled);
     });
   });
 }
 
-// Base map layer controls
+// Base map layer controls (wired to mapEngine + tileSourceEngine)
 function setupBaseLayerControls() {
   const controlsContainer = document.getElementById("layer-controls");
   if (controlsContainer) {
@@ -124,13 +133,10 @@ function setupBaseLayerControls() {
     radio.addEventListener("change", () => {
       if (!radio.checked) return;
       const value = radio.value;
-
       mapEngine.setBaseLayer(value);
-      console.log("Base map layer changed to:", value);
     });
   });
 
-  // re-bind tree theme toggle because we recreated it in the DOM
   setupTreeThemeToggle();
 }
 
@@ -149,10 +155,7 @@ function setupWeatherCenterIntegration() {
     const query = weatherSearchInput.value.trim();
     if (!query) return;
 
-    lastWeatherLocation = {
-      query
-      // later: lat, lng, etc.
-    };
+    lastWeatherLocation = { query };
 
     weatherResults.innerHTML = `
       <p><strong>Location:</strong> ${query}</p>
@@ -176,12 +179,10 @@ function setupWeatherCenterIntegration() {
       radarCheckbox.checked = true;
       radarCheckbox.dispatchEvent(new Event("change"));
     }
-
-    console.log("View on Map for location:", lastWeatherLocation);
   });
 }
 
-// Client View wiring (uses Job View engine)
+// Client View wiring (uses Job View engine – no markers)
 function setupClientView() {
   const showBtn = document.getElementById("show-job-view-btn");
   const clearBtn = document.getElementById("clear-job-view-btn");
@@ -199,7 +200,7 @@ function setupClientView() {
       name,
       address,
       notes,
-      radiusMeters: 100,
+      radiusMeters: 150,
       enableWeather: true,
       enableRoute: true
     });
@@ -210,7 +211,7 @@ function setupClientView() {
   });
 }
 
-// Supply Finder wiring (Store engine + markers)
+// Supply Finder wiring (no map markers; just list)
 function setupSupplyFinder() {
   const btn = document.getElementById("find-supplies-btn");
   const queryInput = document.getElementById("supply-query");
@@ -225,29 +226,25 @@ function setupSupplyFinder() {
     const center = mapEngine.getCenter();
     const stores = storeEngine.searchStores(query, center.lat, center.lng);
 
-    markerEngine.clearStoreMarkers();
-
     if (!stores.length) {
       resultsEl.innerHTML = `<div>No nearby stores found for "<strong>${query}</strong>".</div>`;
       return;
     }
 
-    const htmlParts = [];
-    stores.forEach((store) => {
+    const htmlParts = stores.map((store) => {
       const miles = (store.distanceKm * 0.621371).toFixed(1);
-      htmlParts.push(
-        `<div class="store-result">
+      return `
+        <div class="store-result">
           <strong>${store.name}</strong> — ${miles} mi
-        </div>`
-      );
-      markerEngine.addStoreMarker(store.lat, store.lng, { name: store.name, label: store.name });
+        </div>
+      `;
     });
 
     resultsEl.innerHTML = htmlParts.join("");
   });
 }
 
-// Equipment & Parts Finder wiring
+// Equipment & Parts Finder wiring (no map markers; just list)
 function setupEquipmentFinder() {
   const btn = document.getElementById("find-parts-btn");
   const typeEl = document.getElementById("equipment-type");
@@ -288,12 +285,13 @@ function setupEquipmentFinder() {
   });
 }
 
+
 // ============================================================
 // ENGINES
 // ============================================================
 
 // -------------------------------
-// Tile Source Engine
+// Tile Source Engine (real providers)
 // -------------------------------
 const tileSourceEngine = (() => {
   const sources = {
@@ -303,15 +301,15 @@ const tileSourceEngine = (() => {
     },
     satellite: {
       name: "Satellite",
-      url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png" // placeholder
+      url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
     },
     terrain: {
       name: "Terrain",
-      url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+      url: "https://stamen-tiles.a.ssl.fastly.net/terrain/{z}/{x}/{y}.jpg"
     },
     trails: {
       name: "Trails",
-      url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+      url: "https://tile.opentopomap.org/{z}/{x}/{y}.png"
     }
   };
 
@@ -319,23 +317,16 @@ const tileSourceEngine = (() => {
     return (sources[key] && sources[key].url) || sources.street.url;
   }
 
-  function listSources() {
-    return sources;
-  }
-
   return {
-    getUrlTemplate,
-    listSources
+    getUrlTemplate
   };
 })();
 
 // -------------------------------
-// Geocoding Engine (mockable)
+// Geocoding Engine (mock – swap later)
 // -------------------------------
 const geocodeEngine = (() => {
   async function geocodeAddress(address) {
-    console.log("Geocoding address:", address);
-
     if (/atlanta/i.test(address)) {
       return { lat: 33.749, lng: -84.388 };
     }
@@ -356,18 +347,18 @@ const geocodeEngine = (() => {
 })();
 
 // -------------------------------
-// Map Engine (Web Mercator tiles)
+// Map Engine (Web Mercator tiles, smooth pan/zoom)
 // -------------------------------
 const mapEngine = (() => {
   const TILE_SIZE = 256;
-  const MIN_ZOOM = 2;
-  const MAX_ZOOM = 20;
+  const MIN_ZOOM = 3;
+  const MAX_ZOOM = 19;
 
   let container;
   let tileLayer;
   let overlayLayer;
 
-  let centerLat = 33.749;  // default: Atlanta
+  let centerLat = 33.749;
   let centerLng = -84.388;
   let zoom = 13;
   let baseLayerKey = "street";
@@ -461,9 +452,6 @@ const mapEngine = (() => {
       }
     }
 
-    if (typeof markerEngine !== "undefined" && markerEngine.repositionAll) {
-      markerEngine.repositionAll();
-    }
     if (typeof routeEngine !== "undefined" && routeEngine.onMapChanged) {
       routeEngine.onMapChanged();
     }
@@ -647,133 +635,7 @@ const mapEngine = (() => {
 })();
 
 // -------------------------------
-// Marker Engine
-// -------------------------------
-const markerEngine = (() => {
-  let overlayLayer = null;
-  const markers = [];
-
-  function init() {
-    overlayLayer = mapEngine.getOverlayLayer();
-    if (!overlayLayer) return;
-  }
-
-  function latLngToPixel(lat, lng) {
-    const center = mapEngine.getCenter();
-    const zoom = mapEngine.getZoom();
-    const TILE_SIZE = 256;
-    const scale = Math.pow(2, zoom);
-
-    function lngToX(lngVal) {
-      return ((lngVal + 180) / 360) * TILE_SIZE * scale;
-    }
-
-    function latToY(latVal) {
-      const rad = (latVal * Math.PI) / 180;
-      return (
-        (0.5 -
-          Math.log((1 + Math.sin(rad)) / (1 - Math.sin(rad))) /
-            (4 * Math.PI)) *
-        TILE_SIZE *
-        scale
-      );
-    }
-
-    const centerX = lngToX(center.lng);
-    const centerY = latToY(center.lat);
-
-    const mapRect = overlayLayer.getBoundingClientRect();
-    const worldX = lngToX(lng);
-    const worldY = latToY(lat);
-
-    const dx = worldX - centerX;
-    const dy = worldY - centerY;
-
-    const x = mapRect.width / 2 + dx;
-    const y = mapRect.height / 2 + dy;
-
-    return { x, y };
-  }
-
-  function createMarkerElement(type, meta) {
-    const el = document.createElement("div");
-    el.className = `marker marker-${type}`;
-    el.title =
-      (meta && meta.name) ||
-      (meta && meta.address) ||
-      (meta && meta.label) ||
-      "";
-
-    const inner = document.createElement("div");
-    inner.className = "marker-inner";
-    el.appendChild(inner);
-
-    return el;
-  }
-
-  function addMarker(lat, lng, type, meta = {}) {
-    if (!overlayLayer) init();
-    if (!overlayLayer) return;
-
-    const el = createMarkerElement(type, meta);
-    overlayLayer.appendChild(el);
-
-    const marker = { lat, lng, type, meta, el };
-    markers.push(marker);
-
-    positionMarker(marker);
-    return marker;
-  }
-
-  function positionMarker(marker) {
-    if (!overlayLayer) return;
-    const { x, y } = latLngToPixel(marker.lat, marker.lng);
-    marker.el.style.left = `${x}px`;
-    marker.el.style.top = `${y}px`;
-  }
-
-  function repositionAll() {
-    markers.forEach(positionMarker);
-  }
-
-  function clearByType(type) {
-    if (!overlayLayer) return;
-    for (let i = markers.length - 1; i >= 0; i--) {
-      if (markers[i].type === type) {
-        overlayLayer.removeChild(markers[i].el);
-        markers.splice(i, 1);
-      }
-    }
-  }
-
-  function clearJobMarker() {
-    clearByType("job");
-  }
-
-  function clearStoreMarkers() {
-    clearByType("store");
-  }
-
-  function addJobMarker(lat, lng, meta) {
-    return addMarker(lat, lng, "job", meta);
-  }
-
-  function addStoreMarker(lat, lng, meta) {
-    return addMarker(lat, lng, "store", meta);
-  }
-
-  return {
-    init,
-    addJobMarker,
-    clearJobMarker,
-    addStoreMarker,
-    clearStoreMarkers,
-    repositionAll
-  };
-})();
-
-// -------------------------------
-// Route Engine
+// Route Engine (line only, no markers)
 // -------------------------------
 const routeEngine = (() => {
   let overlayLayer = null;
@@ -822,10 +684,7 @@ const routeEngine = (() => {
 
     if (pathPoints.length < 2) return;
 
-    const pixelPoints = pathPoints.map((p) => {
-      const { x, y } = latLngToPixelForRoute(p.lat, p.lng);
-      return { x, y };
-    });
+    const pixelPoints = pathPoints.map((p) => latLngToPixel(p.lat, p.lng));
 
     ctx.lineWidth = 3;
     ctx.strokeStyle = "rgba(151, 216, 114, 0.9)";
@@ -837,7 +696,7 @@ const routeEngine = (() => {
     ctx.setLineDash([]);
   }
 
-  function latLngToPixelForRoute(lat, lng) {
+  function latLngToPixel(lat, lng) {
     const center = mapEngine.getCenter();
     const zoom = mapEngine.getZoom();
     const TILE_SIZE = 256;
@@ -1113,7 +972,7 @@ const radiusToolEngine = (() => {
 })();
 
 // -------------------------------
-// Store / Supply Finder Engine
+// Store / Supply Finder Engine (mock data)
 // -------------------------------
 const storeEngine = (() => {
   const stores = [
@@ -1183,7 +1042,7 @@ const storeEngine = (() => {
 })();
 
 // -------------------------------
-// Parts Finder Engine
+// Parts Finder Engine (mock catalog)
 // -------------------------------
 const partsEngine = (() => {
   const partsCatalog = [
@@ -1232,7 +1091,7 @@ const partsEngine = (() => {
 })();
 
 // -------------------------------
-// Job View Engine
+// Job View Engine (no map markers)
 // -------------------------------
 const jobViewEngine = (() => {
   async function showJobView({
@@ -1248,9 +1107,6 @@ const jobViewEngine = (() => {
     const { lat, lng } = await geocodeEngine.geocodeAddress(address);
 
     mapEngine.setCenter(lat, lng);
-
-    markerEngine.clearJobMarker();
-    markerEngine.addJobMarker(lat, lng, { name, address, notes });
 
     if (radiusMeters > 0) {
       radiusToolEngine.setRadius(lat, lng, radiusMeters);
@@ -1269,11 +1125,10 @@ const jobViewEngine = (() => {
       routeEngine.clearRoute();
     }
 
-    console.log("Job View applied:", { lat, lng, name, address, notes });
+    console.log("Job View:", { lat, lng, name, address, notes });
   }
 
   function clearJobView() {
-    markerEngine.clearJobMarker();
     routeEngine.clearRoute();
     radiusToolEngine.clearRadius();
   }
@@ -1284,6 +1139,7 @@ const jobViewEngine = (() => {
   };
 })();
 
+
 // ============================================================
 // Map init entry point
 // ============================================================
@@ -1292,8 +1148,9 @@ function initMap() {
   if (!mapEl) return;
 
   mapEngine.init(mapEl);
-  mapEngine.setCenter(33.749, -84.388); // Atlanta default
+  mapEngine.setCenter(33.749, -84.388);
 }
+
 
 // ============================================================
 // Boot
@@ -1309,7 +1166,6 @@ document.addEventListener("DOMContentLoaded", () => {
   setupSupplyFinder();
   setupEquipmentFinder();
   initMap();
-  markerEngine.init();
   routeEngine.init();
   weatherOverlayEngine.init();
   radiusToolEngine.init();
