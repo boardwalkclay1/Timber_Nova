@@ -5,9 +5,13 @@
   <title>Timber Nova – Field-Ready Map for Tree Workers</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
+  <!-- Only your CSS -->
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
+
+  <!-- HEADER -->
   <header id="site-header">
     <div class="logo">
       <span class="logo-icon">🌲</span>
@@ -17,285 +21,154 @@
     <nav class="main-nav">
       <button class="nav-link" data-scroll-target="#hero">Home</button>
       <button class="nav-link" data-scroll-target="#map-section">Map</button>
-      <button class="nav-link" data-scroll-target="#weather-center">Weather Center</button>
+      <button class="nav-link" data-scroll-target="#weather-center">Weather</button>
       <button class="nav-link" data-scroll-target="#how-it-works">How It Works</button>
     </nav>
   </header>
 
-  <main>
-    <!-- HERO / LANDING -->
-    <section id="hero">
-      <div class="hero-content">
-        <h1>Timber Nova</h1>
-        <p class="hero-tagline">
-          The field-ready map for climbers, cutters, bucket crews, and ground guys.
-        </p>
-        <div class="hero-actions">
-          <button id="open-map-btn" class="primary-cta" data-scroll-target="#map-section">
-            Open the Map
-          </button>
-          <button class="secondary-cta" data-scroll-target="#how-it-works">
-            Learn how it works
-          </button>
+  <!-- HERO -->
+  <section id="hero">
+    <div class="hero-content">
+      <h1>Timber Nova</h1>
+      <p class="hero-tagline">The field-ready map for climbers, cutters, bucket crews, and ground guys.</p>
+
+      <div class="hero-actions">
+        <button class="primary-cta" data-scroll-target="#map-section">Open the Map</button>
+        <button class="secondary-cta" data-scroll-target="#how-it-works">Learn how it works</button>
+      </div>
+    </div>
+
+    <!-- Falling leaves container -->
+    <div id="leaf-container"></div>
+
+    <!-- Chainsaw on ground -->
+    <div id="chainsaw"></div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how-it-works" class="content-section">
+    <h2>How Timber Nova Helps Tree Workers</h2>
+
+    <section class="info-block">
+      <h3>Client View</h3>
+      <p>Enter a client’s address and get a full layered job view with super zoom, terrain, satellite, and weather overlays.</p>
+    </section>
+
+    <section class="info-block">
+      <h3>Supply Finder</h3>
+      <p>Type in anything you need and instantly see nearby stores with stock info.</p>
+    </section>
+
+    <section class="info-block">
+      <h3>Equipment & Parts Finder</h3>
+      <p>Enter your equipment model and find the correct parts and nearest stores.</p>
+    </section>
+
+    <section class="info-block">
+      <h3>Weather Center</h3>
+      <p>Check weather anywhere and send it directly to the map.</p>
+    </section>
+
+    <section class="info-block">
+      <h3>Map Layers & Tree Theme</h3>
+      <p>Switch between street, satellite, terrain, trails, and full Timber Nova tree theme.</p>
+    </section>
+
+    <section class="info-block">
+      <h3>Built for Simplicity</h3>
+      <p>No login. No profile. Just open and use.</p>
+    </section>
+
+    <section class="info-block support-block">
+      <h3>A Note From Chainsaw Clay</h3>
+      <p>I’ve been a tree climber for 8 years and built this to help our community. If you want to support the project, you can drop anything into my tip jar.</p>
+      <p class="signature">— Chainsaw Clay</p>
+      <a id="tip-jar-link" href="YOUR_PAYPAL_LINK_HERE" target="_blank">Tip Jar</a>
+    </section>
+  </section>
+
+  <!-- MAP SECTION -->
+  <section id="map-section">
+    <div id="map-layout">
+
+      <!-- LEFT PANEL -->
+      <aside id="left-panel">
+        <div class="panel-tabs">
+          <button class="panel-tab active" data-panel-target="#client-view-panel">Client View</button>
+          <button class="panel-tab" data-panel-target="#supply-finder-panel">Supplies</button>
+          <button class="panel-tab" data-panel-target="#equipment-panel">Parts</button>
+        </div>
+
+        <div id="client-view-panel" class="panel active">
+          <h3>Client View</h3>
+          <label>Client Name <input type="text" id="client-name"></label>
+          <label>Address <input type="text" id="client-address"></label>
+          <label>Notes <textarea id="client-notes"></textarea></label>
+          <button id="show-job-view-btn" class="primary-cta">Show Job</button>
+          <button id="clear-job-view-btn" class="secondary-cta">Clear</button>
+        </div>
+
+        <div id="supply-finder-panel" class="panel">
+          <h3>Supply Finder</h3>
+          <label>Item <input type="text" id="supply-query"></label>
+          <button id="find-supplies-btn" class="primary-cta">Find Supplies</button>
+          <div id="supply-results"></div>
+        </div>
+
+        <div id="equipment-panel" class="panel">
+          <h3>Equipment & Parts</h3>
+          <label>Type <input type="text" id="equipment-type"></label>
+          <label>Brand <input type="text" id="equipment-brand"></label>
+          <label>Model <input type="text" id="equipment-model"></label>
+          <button id="find-parts-btn" class="primary-cta">Find Parts</button>
+          <div id="parts-results"></div>
+        </div>
+      </aside>
+
+      <!-- MAP -->
+      <div id="map-container">
+        <div id="map-toolbar">
+          <div id="weather-controls"></div>
+          <div id="layer-controls"></div>
+        </div>
+        <div id="map">
+          <div class="map-placeholder">Map loading…</div>
         </div>
       </div>
-      <div class="hero-bg-layer hero-leaves"></div>
-      <div class="hero-bg-layer hero-roots"></div>
-    </section>
 
-    <!-- HOW IT WORKS / LANDING EXPLAINER -->
-    <section id="how-it-works" class="content-section">
-      <h2>How Timber Nova Helps Tree Workers</h2>
+    </div>
+  </section>
 
-      <section id="client-view-info" class="info-block">
-        <h3>Client View: See the Job Before You Arrive</h3>
-        <p>
-          Enter a client’s address and Timber Nova gives you a full, layered view of the job site:
-          high-resolution map tiles with super zoom, street and satellite views, terrain, trails,
-          access points, and live weather overlays. See how you’ll approach, where to park, and
-          how the weather will look when you’re in the tree.
-        </p>
-      </section>
+  <!-- WEATHER CENTER -->
+  <section id="weather-center" class="content-section">
+    <h2>Weather Center</h2>
 
-      <section id="supply-section" class="info-block">
-        <h3>Supply Finder: Get What You Need, Fast</h3>
-        <p>
-          Type in anything you need – bar oil, rigging rope, PPE, wedges – and Timber Nova shows
-          nearby stores that carry it, how far they are, and their basic info. No guesswork, no
-          wasted drives across town.
-        </p>
-      </section>
-
-      <section id="equipment-section" class="info-block">
-        <h3>Equipment & Parts Finder</h3>
-        <p>
-          Not sure which chain, bar, or filter fits your saw or chipper Just plug in the equipment
-          type, brand, and model, and Timber Nova helps you locate the right parts and the stores
-          that carry them nearby.
-        </p>
-      </section>
-
-      <section id="weather-section" class="info-block">
-        <h3>Weather Center: Plan Around the Sky</h3>
-        <p>
-          Tree work runs on weather. Timber Nova gives you a dedicated Weather Center to check
-          conditions where you are and anywhere you look up – radar, wind, storms, temperature,
-          precipitation, cloud cover, and more – plus a direct link into the map.
-        </p>
-      </section>
-
-      <section id="layers-section" class="info-block">
-        <h3>Map Layers & Tree Theme</h3>
-        <p>
-          Switch between street, satellite, terrain, and trails in one click. Turn on Tree Theme
-          Mode for a full Timber Nova look – earthy colors, leaf and root accents, and custom
-          markers – while keeping everything clean and easy to read.
-        </p>
-      </section>
-
-      <section id="simplicity-section" class="info-block">
-        <h3>Built for Simplicity</h3>
-        <p>
-          No login. No profile. No sign-up. Just open Timber Nova and use it. The interface is
-          built to work in the field – fast to load, easy to read, and simple enough to use with
-          gloves on.
-        </p>
-      </section>
-
-      <section id="support-section" class="info-block support-block">
-        <h3>A Note From Chainsaw Clay</h3>
-        <p>
-          I’ve been a tree climber for 8 years, and I know we don’t have many tools built
-          specifically for what we do. I built Timber Nova to make our work safer, clearer, and
-          easier to plan – something made by a tree guy, for tree guys.
-        </p>
-        <p>
-          If you want to support the project and help me keep building tools for our community,
-          you can drop anything into my tip jar. It truly helps and keeps these projects alive.
-        </p>
-        <p class="signature">
-          — Chainsaw Clay
-        </p>
-        <a id="tip-jar-link" class="tip-jar-link"
-           href="YOUR_PAYPAL_LINK_HERE"
-           target="_blank"
-           rel="noopener">
-          Tip jar (PayPal)
-        </a>
-      </section>
-    </section>
-
-    <!-- MAIN MAP SECTION -->
-    <section id="map-section">
-      <div id="map-layout">
-        <!-- LEFT PANEL -->
-        <aside id="left-panel">
-          <div class="panel-tabs">
-            <button class="panel-tab active" data-panel-target="#client-view-panel">
-              Client View
-            </button>
-            <button class="panel-tab" data-panel-target="#supply-finder-panel">
-              Supply Finder
-            </button>
-            <button class="panel-tab" data-panel-target="#equipment-panel">
-              Equipment & Parts
-            </button>
-          </div>
-
-          <!-- CLIENT VIEW PANEL -->
-          <div id="client-view-panel" class="panel active">
-            <h3>Client View</h3>
-            <label>
-              Client Name
-              <input type="text" id="client-name" placeholder="Optional">
-            </label>
-            <label>
-              Address
-              <input type="text" id="client-address" placeholder="123 Tree St, City">
-            </label>
-            <label>
-              Job Notes
-              <textarea id="client-notes" rows="3" placeholder="Optional notes about the job..."></textarea>
-            </label>
-            <div class="panel-actions">
-              <button id="show-job-view-btn" class="primary-cta">Show Job View</button>
-              <button id="clear-job-view-btn" class="secondary-cta">Clear</button>
-            </div>
-          </div>
-
-          <!-- SUPPLY FINDER PANEL -->
-          <div id="supply-finder-panel" class="panel">
-            <h3>Supply Finder</h3>
-            <label>
-              What do you need
-              <input type="text" id="supply-query" placeholder="Bar oil, rigging rope, helmet...">
-            </label>
-            <div class="panel-actions">
-              <button id="find-supplies-btn" class="primary-cta">Find Supplies Nearby</button>
-            </div>
-            <div id="supply-results" class="results-list">
-              <!-- populated by JS -->
-            </div>
-          </div>
-
-          <!-- EQUIPMENT & PARTS PANEL -->
-          <div id="equipment-panel" class="panel">
-            <h3>Equipment & Parts</h3>
-            <label>
-              Equipment Type
-              <select id="equipment-type">
-                <option value="">Select...</option>
-                <option value="chainsaw">Chainsaw</option>
-                <option value="chipper">Chipper</option>
-                <option value="stump-grinder">Stump Grinder</option>
-                <option value="blower">Blower</option>
-                <option value="other">Other</option>
-              </select>
-            </label>
-            <label>
-              Brand
-              <input type="text" id="equipment-brand" placeholder="Stihl, Husqvarna, Vermeer...">
-            </label>
-            <label>
-              Model
-              <input type="text" id="equipment-model" placeholder="MS 362, 372XP, etc.">
-            </label>
-            <div class="panel-actions">
-              <button id="find-parts-btn" class="primary-cta">Find Parts</button>
-            </div>
-            <div id="parts-results" class="results-list">
-              <!-- populated by JS -->
-            </div>
-          </div>
-        </aside>
-
-        <!-- MAP + CONTROLS -->
-        <div id="map-container">
-          <div id="map-toolbar">
-            <div id="weather-controls" class="toolbar-group">
-              <span class="toolbar-title">Weather</span>
-              <label><input type="checkbox" data-weather-layer="radar"> Radar</label>
-              <label><input type="checkbox" data-weather-layer="wind"> Wind</label>
-              <label><input type="checkbox" data-weather-layer="storms"> Storms</label>
-              <label><input type="checkbox" data-weather-layer="temperature"> Temp</label>
-            </div>
-
-            <div id="layer-controls" class="toolbar-group">
-              <span class="toolbar-title">Map</span>
-              <label><input type="radio" name="base-layer" value="street" checked> Street</label>
-              <label><input type="radio" name="base-layer" value="satellite"> Satellite</label>
-              <label><input type="radio" name="base-layer" value="terrain"> Terrain</label>
-              <label><input type="radio" name="base-layer" value="trails"> Trails</label>
-              <label class="tree-theme-toggle">
-                <input type="checkbox" id="tree-theme-toggle"> Tree Theme
-              </label>
-            </div>
-          </div>
-
-          <div id="map">
-            <!-- your map engine gets mounted here -->
-            <div class="map-placeholder">
-              Map goes here. Super zoom, tiles, and overlays wired via JS.
-            </div>
-          </div>
-        </div>
+    <div class="weather-grid">
+      <div class="weather-card">
+        <h3>Your Weather</h3>
+        <div id="current-weather-content"></div>
       </div>
-    </section>
 
-    <!-- WEATHER CENTER (STANDALONE) -->
-    <section id="weather-center" class="content-section">
-      <h2>Weather Center</h2>
-
-      <div class="weather-grid">
-        <section id="current-weather" class="weather-card">
-          <h3>Your Weather</h3>
-          <p class="weather-note">
-            This panel shows weather at your current location: radar, wind, temperature, storms,
-            and more.
-          </p>
-          <div id="current-weather-content">
-            <!-- populated by JS -->
-            <p class="placeholder">Location detection and live data wiring goes here.</p>
-          </div>
-        </section>
-
-        <section id="weather-lookup" class="weather-card">
-          <h3>Look Up Weather Anywhere</h3>
-          <label>
-            Location
-            <input type="text" id="weather-search" placeholder="Enter city, address, or coordinates">
-          </label>
-          <div class="panel-actions">
-            <button id="weather-search-btn" class="primary-cta">Search</button>
-          </div>
-          <div id="weather-results">
-            <!-- populated by JS -->
-            <p class="placeholder">Search a location to see detailed weather.</p>
-          </div>
-          <button id="view-on-map-btn" class="secondary-cta" disabled>
-            View on Map
-          </button>
-        </section>
-
-        <section id="weather-patterns" class="weather-card">
-          <h3>Weather Patterns</h3>
-          <p class="weather-note">
-            Visualize radar, wind, storm paths, and cloud movement across a wider area to plan
-            climbs and removals safely.
-          </p>
-          <div id="weather-patterns-content">
-            <!-- could be another mini-map or timeline -->
-            <p class="placeholder">Patterns / mini-map / timeline wiring goes here.</p>
-          </div>
-        </section>
+      <div class="weather-card">
+        <h3>Look Up Weather</h3>
+        <input type="text" id="weather-search" placeholder="Enter location">
+        <button id="weather-search-btn" class="primary-cta">Search</button>
+        <div id="weather-results"></div>
+        <button id="view-on-map-btn" class="secondary-cta" disabled>View on Map</button>
       </div>
-    </section>
-  </main>
+
+      <div class="weather-card">
+        <h3>Weather Patterns</h3>
+        <div id="weather-patterns-content"></div>
+      </div>
+    </div>
+  </section>
 
   <footer id="site-footer">
-    <p>Timber Nova — built by a tree climber, for tree workers.</p>
+    <p>Timber Nova — built for tree workers.</p>
   </footer>
 
+  <!-- Only your JS -->
   <script src="app.js"></script>
 </body>
 </html>
