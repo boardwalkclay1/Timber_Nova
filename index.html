@@ -1,378 +1,282 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Timber Nova – Field-Ready Map for Tree Workers</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <title>TimberNova — Field Operations</title>
 
-  <link rel="stylesheet" href="styles.css">
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <style>
+    body {
+      margin: 0;
+      background: #0a0f14;
+      color: #e8f5e9;
+      font-family: "Inter", sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Layout */
+    #layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      height: 100vh;
+    }
+
+    #map {
+      height: 100%;
+      width: 100%;
+      position: relative;
+      z-index: 1;
+    }
+
+    #sidebar {
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(8px);
+      padding: 20px;
+      overflow-y: auto;
+      border-left: 1px solid #1b2a2f;
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: #9be7ff;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border-radius: 6px;
+      border: 1px solid #2c3e50;
+      background: #0f1a20;
+      color: #d0f0ff;
+      font-size: 15px;
+    }
+
+    button:hover {
+      background: #1b2a2f;
+      cursor: pointer;
+    }
+
+    .section {
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #1b2a2f;
+    }
+
+    /* Falling Leaves */
+    .leaf {
+      position: fixed;
+      top: -10vh;
+      width: 24px;
+      height: 24px;
+      background-image: url('./assets/leaf.png');
+      background-size: cover;
+      opacity: 0.8;
+      animation: fall linear infinite;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    @keyframes fall {
+      0% { transform: translateY(0) rotate(0deg); }
+      100% { transform: translateY(110vh) rotate(360deg); }
+    }
+
+    /* Tree Name Tag */
+    #tree-name {
+      position: fixed;
+      bottom: 12px;
+      right: 20px;
+      font-family: "Dancing Script", cursive;
+      font-size: 28px;
+      color: #c8ffda;
+      opacity: 0.9;
+      z-index: 9999;
+    }
+
+    /* Tree Image */
+    #tree-image {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 180px;
+      opacity: 0.25;
+      z-index: 9998;
+    }
+  </style>
 </head>
 
 <body>
+  <div id="layout">
+    <div id="map"></div>
 
-  <!-- GLOBAL LEAF ANIMATION -->
-  <div id="leaf-container"></div>
+    <div id="sidebar">
+      <h1>TimberNova</h1>
 
-  <!-- HEADER -->
-  <header id="site-header">
-    <div class="logo">
-      <span class="logo-icon">🌲</span>
-      <span class="logo-text">Timber Nova</span>
-    </div>
-
-    <nav class="main-nav">
-      <button class="nav-link" data-scroll-target="#hero">Home</button>
-      <button class="nav-link" data-scroll-target="#map-section">Map</button>
-      <button class="nav-link" data-scroll-target="#weather-center">Weather</button>
-      <button class="nav-link" data-scroll-target="#how-it-works">How It Works</button>
-    </nav>
-  </header>
-
-  <!-- HERO -->
-  <section id="hero">
-    <div class="hero-content">
-      <h1>Timber Nova</h1>
-      <p class="hero-tagline">The field-ready map for climbers, cutters, bucket crews, and ground guys.</p>
-
-      <div class="hero-actions">
-        <button class="primary-cta" data-scroll-target="#map-section">Open the Map</button>
-        <button class="secondary-cta" data-scroll-target="#how-it-works">Learn how it works</button>
-      </div>
-    </div>
-
-    <!-- Chainsaw silhouette -->
-    <div id="chainsaw"></div>
-  </section>
-
-  <!-- HOW IT WORKS -->
-  <section id="how-it-works" class="content-section">
-    <h2>How Timber Nova Helps Tree Workers</h2>
-
-    <div class="info-block">
-      <h3>Client View</h3>
-      <p>Enter a client’s address and get a full layered job view with super zoom, terrain, satellite, and weather overlays.</p>
-    </div>
-
-    <div class="info-block">
-      <h3>Supply Finder</h3>
-      <p>Type in anything you need and instantly see nearby stores with distance and item matching.</p>
-    </div>
-
-    <div class="info-block">
-      <h3>Equipment & Parts Finder</h3>
-      <p>Enter your equipment model and see the correct parts list instantly.</p>
-    </div>
-
-    <div class="info-block">
-      <h3>Weather Center</h3>
-      <p>Check weather anywhere and send radar overlays directly to the map.</p>
-    </div>
-
-    <div class="info-block">
-      <h3>Map Layers & Tree Theme</h3>
-      <p>Switch between street, satellite, terrain, trails, and full Timber Nova tree theme.</p>
-    </div>
-
-    <div class="info-block support-block">
-      <h3>A Note From Chainsaw Clay</h3>
-      <p>I’ve been a tree climber for 8 years and built this to help our community. If you want to support the project, you can drop anything into my tip jar.</p>
-      <p class="signature">— Chainsaw Clay</p>
-      <a id="tip-jar-link" href="#" target="_blank">Tip Jar</a>
-    </div>
-  </section>
-
-  <!-- MAP SECTION -->
-  <section id="map-section">
-    <div id="map-layout">
-
-      <!-- LEFT PANEL -->
-      <aside id="left-panel">
-
-        <div class="panel-tabs">
-          <button class="panel-tab active" data-panel-target="#client-view-panel">Client View</button>
-          <button class="panel-tab" data-panel-target="#supply-finder-panel">Supplies</button>
-          <button class="panel-tab" data-panel-target="#equipment-panel">Parts</button>
-        </div>
-
-        <!-- CLIENT VIEW PANEL -->
-        <div id="client-view-panel" class="panel active">
-          <h3>Client View</h3>
-
-          <label>Client Name
-            <input type="text" id="client-name">
-          </label>
-
-          <label>Address
-            <input type="text" id="client-address">
-          </label>
-
-          <label>Notes
-            <textarea id="client-notes"></textarea>
-          </label>
-
-          <div class="panel-actions">
-            <button id="show-job-view-btn" class="primary-cta">Show Job</button>
-            <button id="clear-job-view-btn" class="secondary-cta">Clear</button>
-          </div>
-        </div>
-
-        <!-- SUPPLY FINDER PANEL -->
-        <div id="supply-finder-panel" class="panel">
-          <h3>Supply Finder</h3>
-
-          <label>Item
-            <input type="text" id="supply-query" placeholder="bar oil, rope, helmet">
-          </label>
-
-          <button id="find-supplies-btn" class="primary-cta">Find Supplies</button>
-
-          <div id="supply-results" class="results-list"></div>
-        </div>
-
-        <!-- EQUIPMENT / PARTS PANEL -->
-        <div id="equipment-panel" class="panel">
-          <h3>Equipment & Parts</h3>
-
-          <label>Type
-            <input type="text" id="equipment-type" placeholder="chainsaw">
-          </label>
-
-          <label>Brand
-            <input type="text" id="equipment-brand" placeholder="stihl">
-          </label>
-
-          <label>Model
-            <input type="text" id="equipment-model" placeholder="ms 362">
-          </label>
-
-          <button id="find-parts-btn" class="primary-cta">Find Parts</button>
-
-          <div id="parts-results" class="results-list"></div>
-        </div>
-
-      </aside>
-
-      <!-- MAP + TOOLBARS -->
-      <div id="map-container">
-
-        <div id="map-toolbar">
-          <div id="weather-controls"></div>
-          <div id="layer-controls"></div>
-        </div>
-
-        <div id="map">
-          <div class="map-placeholder">Map loading…</div>
-        </div>
-
+      <div class="section">
+        <input id="tree-search" placeholder="Search tree species or diseases..." />
+        <button id="btn-tree-search">Look Up Tree Info</button>
+        <pre id="tree-info" style="white-space: pre-wrap; font-size: 13px;"></pre>
       </div>
 
-    </div>
-  </section>
-
-  <!-- WEATHER CENTER -->
-  <section id="weather-center" class="content-section">
-    <h2>Weather Center</h2>
-
-    <div class="weather-grid">
-
-      <div class="weather-card">
-        <h3>Your Weather</h3>
-        <div id="current-weather-content" class="placeholder">Weather data will appear here.</div>
+      <div class="section">
+        <button id="btn-location">Use My Location</button>
+        <input id="input-address" placeholder="Client address..." />
+        <button id="btn-go-address">Go to Address</button>
       </div>
 
-      <div class="weather-card">
-        <h3>Look Up Weather</h3>
-        <input type="text" id="weather-search" placeholder="Enter location">
-        <button id="weather-search-btn" class="primary-cta">Search</button>
-        <div id="weather-results" class="placeholder"></div>
-        <button id="view-on-map-btn" class="secondary-cta" disabled>View on Map</button>
+      <div class="section">
+        <input id="input-radius" type="number" value="100" />
+        <button id="btn-radius">Set Radius (ft)</button>
       </div>
 
-      <div class="weather-card">
-        <h3>Weather Patterns</h3>
-        <div id="weather-patterns-content" class="placeholder">
-          Radar, wind, storms, and temperature overlays on the map.
-        </div>
+      <div class="section">
+        <button id="btn-lumberjack">Lumberjack Intel</button>
+        <pre id="lumberjack-output" style="white-space: pre-wrap; font-size: 13px;"></pre>
       </div>
 
-    </div>
-  </section>
-
-  <!-- FOOTER -->
-  <footer id="site-footer">
-    <p>Timber Nova — built for tree workers.</p>
-  </footer>
-
-  <script src="app.js"></script>
-</body>
-</html>
-      <div class="hero-actions">
-        <button class="primary-cta" data-scroll-target="#map-section">Open the Map</button>
-        <button class="secondary-cta" data-scroll-target="#how-it-works">Learn how it works</button>
-      </div>
-    </div>
-
-    <!-- Chainsaw silhouette -->
-    <div id="chainsaw"></div>
-  </section>
-
-  <!-- HOW IT WORKS -->
-  <section id="how-it-works" class="content-section">
-    <h2>How Timber Nova Helps Tree Workers</h2>
-
-    <div class="info-block">
-      <h3>Client View</h3>
-      <p>Enter a client’s address and get a full layered job view with super zoom, terrain, satellite, and weather overlays.</p>
-    </div>
-
-    <div class="info-block">
-      <h3>Supply Finder</h3>
-      <p>Type in anything you need and instantly see nearby stores with stock info.</p>
-    </div>
-
-    <div class="info-block">
-      <h3>Equipment & Parts Finder</h3>
-      <p>Enter your equipment model and find the correct parts and nearest stores.</p>
-    </div>
-
-    <div class="info-block">
-      <h3>Weather Center</h3>
-      <p>Check weather anywhere and send it directly to the map.</p>
-    </div>
-
-    <div class="info-block">
-      <h3>Map Layers & Tree Theme</h3>
-      <p>Switch between street, satellite, terrain, trails, and full Timber Nova tree theme.</p>
-    </div>
-
-    <div class="info-block support-block">
-      <h3>A Note From Chainsaw Clay</h3>
-      <p>I’ve been a tree climber for 8 years and built this to help our community. If you want to support the project, you can drop anything into my tip jar.</p>
-      <p class="signature">— Chainsaw Clay</p>
-      <a id="tip-jar-link" href="#" target="_blank">Tip Jar</a>
-    </div>
-  </section>
-
-  <!-- MAP SECTION -->
-  <section id="map-section">
-    <div id="map-layout">
-
-      <!-- LEFT PANEL -->
-      <aside id="left-panel">
-
-        <div class="panel-tabs">
-          <button class="panel-tab active" data-panel-target="#client-view-panel">Client View</button>
-          <button class="panel-tab" data-panel-target="#supply-finder-panel">Supplies</button>
-          <button class="panel-tab" data-panel-target="#equipment-panel">Parts</button>
-        </div>
-
-        <!-- CLIENT VIEW PANEL -->
-        <div id="client-view-panel" class="panel active">
-          <h3>Client View</h3>
-
-          <label>Client Name
-            <input type="text" id="client-name">
-          </label>
-
-          <label>Address
-            <input type="text" id="client-address">
-          </label>
-
-          <label>Notes
-            <textarea id="client-notes"></textarea>
-          </label>
-
-          <div class="panel-actions">
-            <button id="show-job-view-btn" class="primary-cta">Show Job</button>
-            <button id="clear-job-view-btn" class="secondary-cta">Clear</button>
-          </div>
-        </div>
-
-        <!-- SUPPLY FINDER PANEL -->
-        <div id="supply-finder-panel" class="panel">
-          <h3>Supply Finder</h3>
-
-          <label>Item
-            <input type="text" id="supply-query">
-          </label>
-
-          <button id="find-supplies-btn" class="primary-cta">Find Supplies</button>
-
-          <div id="supply-results" class="results-list"></div>
-        </div>
-
-        <!-- EQUIPMENT / PARTS PANEL -->
-        <div id="equipment-panel" class="panel">
-          <h3>Equipment & Parts</h3>
-
-          <label>Type
-            <input type="text" id="equipment-type" placeholder="chainsaw">
-          </label>
-
-          <label>Brand
-            <input type="text" id="equipment-brand" placeholder="stihl">
-          </label>
-
-          <label>Model
-            <input type="text" id="equipment-model" placeholder="ms 362">
-          </label>
-
-          <button id="find-parts-btn" class="primary-cta">Find Parts</button>
-
-          <div id="parts-results" class="results-list"></div>
-        </div>
-
-      </aside>
-
-      <!-- MAP + TOOLBARS -->
-      <div id="map-container">
-
-        <div id="map-toolbar">
-          <div id="weather-controls"></div>
-          <div id="layer-controls"></div>
-        </div>
-
-        <div id="map">
-          <div class="map-placeholder">Map loading…</div>
-        </div>
-
+      <div class="section">
+        <button id="btn-weather">Weather at Center</button>
+        <pre id="weather-output" style="white-space: pre-wrap; font-size: 13px;"></pre>
       </div>
 
+      <div class="section">
+        <button id="btn-google">Google Maps Directions</button>
+        <button id="btn-apple">Apple Maps Directions</button>
+      </div>
     </div>
-  </section>
+  </div>
 
-  <!-- WEATHER CENTER -->
-  <section id="weather-center" class="content-section">
-    <h2>Weather Center</h2>
+  <!-- Tree Name -->
+  <div id="tree-name"></div>
+  <img id="tree-image" />
 
-    <div class="weather-grid">
+  <!-- Leaflet -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-      <div class="weather-card">
-        <h3>Your Weather</h3>
-        <div id="current-weather-content" class="placeholder">Weather data will appear here.</div>
-      </div>
+  <!-- TimberNova Map 2 -->
+  <script type="module">
+    import { createTimberNovaMap2 } from './modules/timbernova-map2/timberNovaMap2.js';
 
-      <div class="weather-card">
-        <h3>Look Up Weather</h3>
-        <input type="text" id="weather-search" placeholder="Enter location">
-        <button id="weather-search-btn" class="primary-cta">Search</button>
-        <div id="weather-results" class="placeholder"></div>
-        <button id="view-on-map-btn" class="secondary-cta" disabled>View on Map</button>
-      </div>
+    const tm = createTimberNovaMap2({ containerId: 'map' });
 
-      <div class="weather-card">
-        <h3>Weather Patterns</h3>
-        <div id="weather-patterns-content" class="placeholder">Radar, wind, storms, and temperature overlays.</div>
-      </div>
+    // UI Elements
+    const btnLocation = document.getElementById('btn-location');
+    const btnGoAddress = document.getElementById('btn-go-address');
+    const inputAddress = document.getElementById('input-address');
+    const inputRadius = document.getElementById('input-radius');
+    const btnRadius = document.getElementById('btn-radius');
+    const btnLumberjack = document.getElementById('btn-lumberjack');
+    const lumberjackOutput = document.getElementById('lumberjack-output');
+    const btnWeather = document.getElementById('btn-weather');
+    const weatherOutput = document.getElementById('weather-output');
+    const btnGoogle = document.getElementById('btn-google');
+    const btnApple = document.getElementById('btn-apple');
+    const treeSearch = document.getElementById('tree-search');
+    const btnTreeSearch = document.getElementById('btn-tree-search');
+    const treeInfo = document.getElementById('tree-info');
 
-    </div>
-  </section>
+    let lastJobCenter = null;
+    let lastUserLoc = null;
 
-  <!-- FOOTER -->
-  <footer id="site-footer">
-    <p>Timber Nova — built for tree workers.</p>
-  </footer>
+    // --- Tree Species Lookup ---
+    async function lookupTree(query) {
+      const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`;
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      return await res.json();
+    }
 
-  <script src="app.js"></script>
+    btnTreeSearch.onclick = async () => {
+      const q = treeSearch.value.trim();
+      if (!q) return;
+      treeInfo.textContent = "Searching...";
+      const data = await lookupTree(q);
+      if (!data) {
+        treeInfo.textContent = "No information found.";
+        return;
+      }
+      treeInfo.textContent = `${data.title}\n\n${data.extract}`;
+    };
+
+    // --- Map Controls ---
+    btnLocation.onclick = async () => {
+      await tm.useMyLocation();
+      navigator.geolocation.getCurrentPosition(pos => {
+        lastUserLoc = [pos.coords.latitude, pos.coords.longitude];
+      });
+    };
+
+    btnGoAddress.onclick = async () => {
+      const addr = inputAddress.value.trim();
+      if (!addr) return;
+      const result = await tm.goToAddress(addr);
+      if (result) lastJobCenter = [result.lat, result.lon];
+    };
+
+    btnRadius.onclick = () => {
+      const ft = parseFloat(inputRadius.value || '100');
+      tm.setRadiusMeters(ft * 0.3048);
+    };
+
+    btnLumberjack.onclick = async () => {
+      const addr = inputAddress.value.trim();
+      if (!addr) return;
+      lumberjackOutput.textContent = "Loading...";
+      const intel = await tm.getLumberjackIntelForAddress(addr);
+      if (!intel) {
+        lumberjackOutput.textContent = "No data.";
+        return;
+      }
+      lastJobCenter = [intel.center.lat, intel.center.lon];
+      lumberjackOutput.textContent = JSON.stringify(intel, null, 2);
+    };
+
+    btnWeather.onclick = async () => {
+      weatherOutput.textContent = "Loading...";
+      const w = await tm.getWeatherAtCenter();
+      weatherOutput.textContent = JSON.stringify(w, null, 2);
+    };
+
+    btnGoogle.onclick = () => {
+      if (!lastUserLoc || !lastJobCenter) return alert("Need your location + job address.");
+      tm.openDirectionsToAddressInGoogleMaps(lastUserLoc, lastJobCenter);
+    };
+
+    btnApple.onclick = () => {
+      if (!lastUserLoc || !lastJobCenter) return alert("Need your location + job address.");
+      tm.openDirectionsToAddressInAppleMaps(lastUserLoc, lastJobCenter);
+    };
+
+    // --- Falling Leaves ---
+    function spawnLeaf() {
+      const leaf = document.createElement("div");
+      leaf.className = "leaf";
+      leaf.style.left = Math.random() * 100 + "vw";
+      leaf.style.animationDuration = 4 + Math.random() * 6 + "s";
+      leaf.style.opacity = 0.5 + Math.random() * 0.5;
+      document.body.appendChild(leaf);
+      setTimeout(() => leaf.remove(), 10000);
+    }
+    setInterval(spawnLeaf, 400);
+
+    // --- Random Tree Image + Name ---
+    const trees = [
+      { name: "White Oak", img: "./assets/trees/white-oak.png" },
+      { name: "Red Maple", img: "./assets/trees/red-maple.png" },
+      { name: "Loblolly Pine", img: "./assets/trees/loblolly.png" },
+      { name: "Sweetgum", img: "./assets/trees/sweetgum.png" },
+      { name: "Sycamore", img: "./assets/trees/sycamore.png" }
+    ];
+
+    const chosen = trees[Math.floor(Math.random() * trees.length)];
+    document.getElementById("tree-name").textContent = chosen.name;
+    document.getElementById("tree-image").src = chosen.img;
+  </script>
 </body>
 </html>
