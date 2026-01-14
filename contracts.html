@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>TimberNova — Contracts</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
   <style>
     body {
       margin: 0;
@@ -12,15 +13,56 @@
       font-family: "Inter", sans-serif;
       overflow-x: hidden;
     }
+
+    /* TOP NAVIGATION BAR */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 52px;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      border-bottom: 1px solid #1b2a2f;
+      z-index: 10000;
+    }
+
+    nav a {
+      color: #e0f0ff;
+      margin-right: 18px;
+      font-size: 14px;
+      text-decoration: none;
+      transition: 0.2s;
+    }
+
+    nav a:hover {
+      color: #9be7ff;
+    }
+
+    nav .brand {
+      color: #9be7ff;
+      font-weight: 600;
+      margin-right: 28px;
+      font-size: 16px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Layout */
     #layout {
       display: grid;
       grid-template-columns: 2fr 1.5fr;
       height: 100vh;
+      margin-top: 52px; /* Push below nav */
     }
+
     #map {
       height: 100%;
       width: 100%;
     }
+
     #sidebar {
       background: rgba(0, 0, 0, 0.7);
       backdrop-filter: blur(8px);
@@ -28,15 +70,18 @@
       overflow-y: auto;
       border-left: 1px solid #1b2a2f;
     }
+
     h1 {
       margin-top: 0;
       font-size: 26px;
       color: #9be7ff;
     }
+
     label {
       font-size: 13px;
       opacity: 0.8;
     }
+
     input, textarea, select {
       width: 100%;
       padding: 8px;
@@ -47,6 +92,7 @@
       color: #d0f0ff;
       font-size: 14px;
     }
+
     button {
       width: 100%;
       padding: 10px;
@@ -57,15 +103,18 @@
       color: #e0f0ff;
       font-size: 15px;
     }
+
     button:hover {
       background: #1f2937;
       cursor: pointer;
     }
+
     .section {
       margin-bottom: 18px;
       padding-bottom: 10px;
       border-bottom: 1px solid #1b2a2f;
     }
+
     .contract-list-item {
       padding: 8px;
       margin-bottom: 6px;
@@ -75,9 +124,11 @@
       font-size: 13px;
       cursor: pointer;
     }
+
     .contract-list-item:hover {
       background: #111827;
     }
+
     /* Leaves */
     .leaf {
       position: fixed;
@@ -91,10 +142,12 @@
       pointer-events: none;
       z-index: 9999;
     }
+
     @keyframes fall {
       0% { transform: translateY(0) rotate(0deg); }
       100% { transform: translateY(110vh) rotate(360deg); }
     }
+
     /* Tree name + image */
     #tree-name {
       position: fixed;
@@ -106,6 +159,7 @@
       opacity: 0.9;
       z-index: 9999;
     }
+
     #tree-image {
       position: fixed;
       bottom: 0;
@@ -116,21 +170,41 @@
     }
   </style>
 </head>
+
 <body>
+
+  <!-- TOP NAV -->
+  <nav>
+    <span class="brand">TimberNova</span>
+    <a href="index.html">Home</a>
+    <a href="profile.html">Profile</a>
+    <a href="contracts.html">Contracts</a>
+    <a href="calendar.html">Calendar</a>
+    <a href="trees.html">Trees</a>
+    <a href="network.html">Network</a>
+    <a href="stores.html">Stores</a>
+    <a href="webrtc.html">Calls</a>
+  </nav>
+
   <div id="layout">
     <div id="map"></div>
+
     <div id="sidebar">
       <h1>Contracts & Clients</h1>
 
       <div class="section">
         <label>Client Name</label>
         <input id="contract-client" placeholder="Client name" />
+
         <label>Client Address</label>
         <input id="contract-address" placeholder="Job address" />
+
         <label>Job Description</label>
         <textarea id="contract-description" rows="3" placeholder="Tree removal, pruning, storm cleanup, etc."></textarea>
+
         <label>Price ($)</label>
         <input id="contract-price" type="number" placeholder="Total price" />
+
         <label>Status</label>
         <select id="contract-status">
           <option value="pending">Pending</option>
@@ -138,6 +212,7 @@
           <option value="scheduled">Scheduled</option>
           <option value="completed">Completed</option>
         </select>
+
         <button id="btn-save-contract">Save Contract</button>
       </div>
 
@@ -157,6 +232,7 @@
   <img id="tree-image" />
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <script type="module">
     import { createTimberNovaMap2 } from './modules/timbernova-map2/timberNovaMap2.js';
 
@@ -169,6 +245,7 @@
       price: document.getElementById('contract-price'),
       status: document.getElementById('contract-status')
     };
+
     const btnSave = document.getElementById('btn-save-contract');
     const listEl = document.getElementById('contract-list');
     const detailEl = document.getElementById('contract-detail');
@@ -212,6 +289,7 @@
         status: fields.status.value,
         createdAt: new Date().toISOString()
       };
+
       contracts.push(contract);
       saveContracts();
       renderList();
@@ -246,6 +324,7 @@
       { name: 'Southern Red Oak', img: './assets/trees/southern-red-oak.png' },
       { name: 'River Birch', img: './assets/trees/river-birch.png' }
     ];
+
     const chosen = trees[Math.floor(Math.random() * trees.length)];
     document.getElementById('tree-name').textContent = chosen.name;
     document.getElementById('tree-image').src = chosen.img;
