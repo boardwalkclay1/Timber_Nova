@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>TimberNova — Calendar</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body {
+      margin: 0;
+      background: #05070a;
+      color: #e8f5e9;
+      font-family: "Inter", sans-serif;
+      overflow-x: hidden;
+    }
+    #layout {
+      display: grid;
+      grid-template-columns: 2fr 1.5fr;
+      height: 100vh;
+    }
+    #map {
+      height: 100%;
+      width: 100%;
+    }
+    #sidebar {
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      padding: 20px;
+      overflow-y: auto;
+      border-left: 1px solid #1b2a2f;
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 26px;
+      color: #9be7ff;
+    }
+    label {
+      font-size: 13px;
+      opacity: 0.8;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin: 4px 0 10px;
+      border-radius: 6px;
+      border: 1px solid #2c3e50;
+      background: #0f1a20;
+      color: #d0f0ff;
+      font-size: 14px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border-radius: 6px;
+      border: 1px solid #2c3e50;
+      background: #111827;
+      color: #e0f0ff;
+      font-size: 15px;
+    }
+    button:hover {
+      background: #1f2937;
+      cursor: pointer;
+    }
+    .section {
+      margin-bottom: 18px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #1b2a2f;
+    }
+    .event-item {
+      padding: 8px;
+      margin-bottom: 6px;
+      border-radius: 6px;
+      background: #0b1117;
+      border: 1px solid #1f2933;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .event-item:hover {
+      background: #111827;
+    }
+    /* Leaves */
+    .leaf {
+      position: fixed;
+      top: -10vh;
+      width: 24px;
+      height: 24px;
+      background-image: url('./assets/leaf.png');
+      background-size: cover;
+      opacity: 0.8;
+      animation: fall linear infinite;
+      pointer-events: none;
+      z-index: 9999;
+    }
+    @keyframes fall {
+      0% { transform: translateY(0) rotate(0deg); }
+      100% { transform: translateY(110vh) rotate(360deg); }
+    }
+    /* Tree name + image */
+    #tree-name {
+      position: fixed;
+      bottom: 12px;
+      right: 20px;
+      font-family: "Dancing Script", cursive;
+      font-size: 26px;
+      color: #c8ffda;
+      opacity: 0.9;
+      z-index: 9999;
+    }
+    #tree-image {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 160px;
+      opacity: 0.25;
+      z-index: 9998;
+    }
+  </style>
+</head>
+<body>
+  <div id="layout">
+    <div id="map"></div>
+    <div id="sidebar">
+      <h1>Calendar & Schedule</h1>
+
+      <div class="section">
+        <label>Job Title</label>
+        <input id="event-title" placeholder="Job name or client" />
+        <label>Date</label>
+        <input id="event-date" type="date" />
+        <label>Start Time</label>
+        <input id="event-start" type="time" />
+        <label>End Time</label>
+        <input id="event-end" type="time" />
+        <label>Address</label>
+        <input id="event-address" placeholder="Job address" />
+        <button id="btn-save-event">Add to Calendar</button>
+      </div>
+
+      <div class="section">
+        <h3 style="margin: 0 0 8px;">Upcoming Jobs</h3>
+        <div id="event-list"></div>
+      </div>
+
+      <div class="section">
+        <button id="btn-view-event-map">View Selected on Map</button>
+        <button id="btn-weather-event">Weather at Selected Job</button>
+        <pre id="event-detail" style="white-space: pre-wrap; font-size: 12px; opacity: 0.8;"></pre>
+      </div>
+    </div>
+  </div>
+
+  <div id="tree-name"></div>
+  <img id="tree-image" />
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script type="module">
+    import { createTimberNovaMap2 } from './modules/timbernova-map2/timberNovaMap2.js';
+
+    const tm = createTimberNovaMap2({ containerId: 'map' });
+
+    const fields = {
+      title: document.getElementById('event-title'),
+      date: document.getElementById('event-date'),
+      start: document.getElementById('event-start'),
+      end: document.getElementById('event-end'),
+      address: document.getElementById('event-address')
+    };
+    const btnSave = document.getElementById('btn-save-event');
+    const listEl = document.getElementById('event-list');
+    const detailEl = document.getElementById('event-detail');
+    const btnViewMap = document.getElementById('btn-view-event-map');
+    const btnWeatherEvent = document.getElementById('btn-weather-event');
+
+    let events = [];
+    let selectedId = null;
+
+    function loadEvents() {
+      const saved = localStorage.getItem('timbernova_events');
+      if (!saved) return;
+      events = JSON.parse(saved);
+      renderList();
+    }
+
+    function saveEvents() {
+      localStorage.setItem('timbernova_events', JSON.stringify(events));
+    }
+
+    function renderList() {
+      listEl.innerHTML = '';
+      const sorted = [...events].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+      sorted.forEach(e => {
+        const div = document.createElement('div');
+        div.className = 'event-item';
+        div.textContent = `${e.date} — ${e.title}`;
+        div.onclick = () => {
+          selectedId = e.id;
+          detailEl.textContent = JSON.stringify(e, null, 2);
+        };
+        listEl.appendChild(div);
+      });
+    }
+
+    btnSave.onclick = () => {
+      const ev = {
+        id: Date.now().toString(),
+        title: fields.title.value.trim(),
+        date: fields.date.value,
+        start: fields.start.value,
+        end: fields.end.value,
+        address: fields.address.value.trim(),
+        createdAt: new Date().toISOString()
+      };
+      events.push(ev);
+      saveEvents();
+      renderList();
+      detailEl.textContent = JSON.stringify(ev, null, 2);
+    };
+
+    btnViewMap.onclick = async () => {
+      if (!selectedId) return;
+      const ev = events.find(x => x.id === selectedId);
+      if (!ev || !ev.address) return;
+      await tm.goToAddress(ev.address);
+    };
+
+    btnWeatherEvent.onclick = async () => {
+      if (!selectedId) return;
+      const ev = events.find(x => x.id === selectedId);
+      if (!ev || !ev.address) return;
+      await tm.goToAddress(ev.address);
+      const w = await tm.getWeatherAtCenter();
+      detailEl.textContent = JSON.stringify({ event: ev, weather: w }, null, 2);
+    };
+
+    loadEvents();
+
+    // Leaves
+    function spawnLeaf() {
+      const leaf = document.createElement('div');
+      leaf.className = 'leaf';
+      leaf.style.left = Math.random() * 100 + 'vw';
+      leaf.style.animationDuration = 4 + Math.random() * 6 + 's';
+      leaf.style.opacity = 0.5 + Math.random() * 0.5;
+      document.body.appendChild(leaf);
+      setTimeout(() => leaf.remove(), 10000);
+    }
+    setInterval(spawnLeaf, 500);
+
+    // Tree name + image
+    const trees = [
+      { name: 'Live Oak', img: './assets/trees/live-oak.png' },
+      { name: 'Longleaf Pine', img: './assets/trees/longleaf-pine.png' },
+      { name: 'Black Cherry', img: './assets/trees/black-cherry.png' },
+      { name: 'Hackberry', img: './assets/trees/hackberry.png' }
+    ];
+    const chosen = trees[Math.floor(Math.random() * trees.length)];
+    document.getElementById('tree-name').textContent = chosen.name;
+    document.getElementById('tree-image').src = chosen.img;
+  </script>
+</body>
+</html>
