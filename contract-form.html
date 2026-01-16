@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>TimberNova — New Contract</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body { margin:0; background:#020617; color:#f9fafb; font-family:system-ui,sans-serif; display:flex; flex-direction:column; min-height:100vh; }
+    header, footer { padding:16px 24px; background:rgba(2,6,23,0.9); border-bottom:1px solid rgba(148,163,184,0.3); display:flex; justify-content:space-between; align-items:center; }
+    footer { border-top:1px solid rgba(148,163,184,0.3); border-bottom:none; margin-top:auto; }
+    nav a { color:#9ca3af; text-decoration:none; margin-left:12px; font-size:14px; padding:6px 10px; border-radius:999px; }
+    nav a:hover { background:rgba(148,163,184,0.2); color:#e5e7eb; }
+    main { padding:24px; max-width:900px; margin:0 auto; flex:1; }
+    h1 { font-size:22px; margin-bottom:8px; }
+    .sub { color:#9ca3af; font-size:14px; margin-bottom:20px; }
+    form { border-radius:16px; border:1px solid rgba(148,163,184,0.3); background:rgba(15,23,42,0.9); padding:16px; display:grid; gap:12px; }
+    label { font-size:13px; color:#e5e7eb; display:block; margin-bottom:4px; }
+    input, textarea { width:100%; border-radius:10px; border:1px solid rgba(148,163,184,0.6); background:rgba(15,23,42,0.9); color:#e5e7eb; padding:8px 10px; font-size:13px; }
+    textarea { resize:vertical; min-height:80px; }
+    .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    @media (max-width:700px){ .row{grid-template-columns:1fr;} }
+    .actions { display:flex; justify-content:space-between; align-items:center; margin-top:8px; }
+    .actions button { border:none; border-radius:999px; padding:8px 14px; font-size:13px; cursor:pointer; }
+    .btn-primary { background:linear-gradient(120deg,#22c55e,#4ade80); color:#022c22; }
+    .btn-ghost { background:rgba(15,23,42,0.9); color:#e5e7eb; border:1px solid rgba(148,163,184,0.5); }
+    .status { font-size:12px; color:#9ca3af; margin-top:4px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>TimberNova • New Contract</div>
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="contracts.html">Contracts</a>
+      <a href="calendar.html">Calendar</a>
+      <a href="trees.html">Trees</a>
+      <a href="network.html">Network</a>
+      <a href="stores.html">Stores</a>
+      <a href="calls.html">Calls</a>
+      <a href="#" id="logout">Logout</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Create contract</h1>
+    <div class="sub">Fill out all details. You’ll sign from the app; the client signs after it’s sent.</div>
+
+    <form id="contractForm">
+      <div class="row">
+        <div>
+          <label>Client name</label>
+          <input id="clientName" required />
+        </div>
+        <div>
+          <label>Client email</label>
+          <input id="clientEmail" type="email" required />
+        </div>
+      </div>
+
+      <label>Job address</label>
+      <input id="jobAddress" required />
+
+      <label>Job description / scope</label>
+      <textarea id="jobDescription" required></textarea>
+
+      <div class="row">
+        <div>
+          <label>Total price (USD)</label>
+          <input id="price" type="number" min="0" step="0.01" required />
+        </div>
+        <div>
+          <label>Job completion date</label>
+          <input id="dueDate" type="date" required />
+        </div>
+      </div>
+
+      <label>Terms</label>
+      <textarea id="terms" placeholder="Payment terms, debris removal, access, liability, etc." required></textarea>
+
+      <div class="actions">
+        <button type="button" class="btn-ghost" id="cancelBtn">Cancel</button>
+        <div>
+          <button type="submit" class="btn-primary">Save contract</button>
+        </div>
+      </div>
+      <div class="status" id="statusMsg"></div>
+    </form>
+  </main>
+
+  <footer>TimberNova • Contracts</footer>
+
+  <script>
+    if (!localStorage.getItem("timberNovaUser")) window.location.href = "index.html";
+    document.getElementById("logout").onclick = () => { localStorage.removeItem("timberNovaUser"); window.location.href="index.html"; };
+
+    const form = document.getElementById("contractForm");
+    const statusMsg = document.getElementById("statusMsg");
+    const cancelBtn = document.getElementById("cancelBtn");
+
+    function loadContracts() {
+      try { return JSON.parse(localStorage.getItem("timberNovaContracts") || "[]"); }
+      catch { return []; }
+    }
+    function saveContracts(contracts) {
+      localStorage.setItem("timberNovaContracts", JSON.stringify(contracts));
+    }
+
+    cancelBtn.onclick = () => { window.location.href = "contracts.html"; };
+
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      const clientName = document.getElementById("clientName").value.trim();
+      const clientEmail = document.getElementById("clientEmail").value.trim();
+      const jobAddress = document.getElementById("jobAddress").value.trim();
+      const jobDescription = document.getElementById("jobDescription").value.trim();
+      const price = document.getElementById("price").value.trim();
+      const dueDate = document.getElementById("dueDate").value;
+      const terms = document.getElementById("terms").value.trim();
+
+      if (!clientName || !clientEmail || !jobAddress || !jobDescription || !price || !dueDate || !terms) {
+        statusMsg.textContent = "Please fill out all fields.";
+        return;
+      }
+
+      const contracts = loadContracts();
+      const id = "c_" + Date.now();
+      const createdAt = new Date().toISOString();
+
+      contracts.unshift({
+        id,
+        clientName,
+        clientEmail,
+        jobAddress,
+        jobDescription,
+        price,
+        createdAt,
+        dueDate,
+        terms,
+        status: "Draft",
+        adminSignature: null,
+        clientSignature: null
+      });
+
+      saveContracts(contracts);
+      statusMsg.textContent = "Contract saved.";
+      setTimeout(() => {
+        window.location.href = `contract-sign.html?id=${encodeURIComponent(id)}&mode=admin`;
+      }, 600);
+    };
+  </script>
+</body>
+</html>
