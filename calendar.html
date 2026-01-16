@@ -6,183 +6,122 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="styles.css" />
   <style>
-    body { margin:0; background:#020617; color:#f9fafb; font-family:system-ui,sans-serif; display:flex; flex-direction:column; min-height:100vh; }
+    body { margin:0; background:#020617; color:#f9fafb; font-family:system-ui,sans-serif; }
     header, footer { padding:16px 24px; background:rgba(2,6,23,0.9); border-bottom:1px solid rgba(148,163,184,0.3); display:flex; justify-content:space-between; align-items:center; }
     footer { border-top:1px solid rgba(148,163,184,0.3); border-bottom:none; margin-top:auto; }
     nav a { color:#9ca3af; text-decoration:none; margin-left:12px; font-size:14px; padding:6px 10px; border-radius:999px; }
     nav a:hover { background:rgba(148,163,184,0.2); color:#e5e7eb; }
-    main { padding:24px; max-width:1100px; margin:0 auto; display:grid; grid-template-columns:2fr 1fr; gap:24px; }
-    @media (max-width:900px){ main{grid-template-columns:1fr;} }
-    .calendar { background:rgba(15,23,42,0.9); border-radius:16px; border:1px solid rgba(148,163,184,0.3); padding:16px; }
-    .cal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
-    .cal-header button { border:none; background:rgba(15,23,42,1); color:#e5e7eb; padding:6px 10px; border-radius:999px; cursor:pointer; font-size:13px; }
-    .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; font-size:13px; }
-    .cal-day-name { text-align:center; color:#9ca3af; padding:4px 0; }
-    .cal-cell { height:70px; border-radius:10px; border:1px solid rgba(30,64,175,0.4); background:rgba(15,23,42,0.9); padding:4px 6px; cursor:pointer; display:flex; flex-direction:column; justify-content:space-between; }
-    .cal-cell.other { opacity:0.35; }
-    .cal-cell.today { border-color:#4ade80; box-shadow:0 0 12px rgba(74,222,128,0.4); }
-    .cal-cell span { font-size:12px; }
-    .cal-dot { width:6px; height:6px; border-radius:999px; background:#4ade80; margin-top:2px; }
-    .events { background:rgba(15,23,42,0.9); border-radius:16px; border:1px solid rgba(148,163,184,0.3); padding:16px; font-size:14px; }
-    .event-item { padding:8px 0; border-bottom:1px solid rgba(148,163,184,0.25); }
-    .event-item:last-child { border-bottom:none; }
-    .event-date { font-size:12px; color:#9ca3af; }
-    .new-event { margin-top:12px; border-top:1px solid rgba(148,163,184,0.25); padding-top:10px; }
-    .new-event input { width:100%; margin-top:6px; margin-bottom:8px; border-radius:10px; border:1px solid rgba(148,163,184,0.6); background:rgba(15,23,42,0.9); color:#e5e7eb; padding:8px 10px; font-size:13px; }
-    .new-event button { border:none; border-radius:10px; padding:8px 14px; font-size:13px; background:linear-gradient(120deg,#22c55e,#4ade80); color:#022c22; cursor:pointer; }
+
+    main { padding:24px; max-width:1000px; margin:0 auto; }
+
+    .calendar-grid {
+      display:grid;
+      grid-template-columns:repeat(7,1fr);
+      gap:8px;
+      margin-top:20px;
+    }
+
+    .day {
+      background:rgba(15,23,42,0.9);
+      border:1px solid rgba(148,163,184,0.3);
+      border-radius:12px;
+      padding:10px;
+      min-height:110px;
+      display:flex;
+      flex-direction:column;
+      font-size:13px;
+    }
+
+    .day-number { font-size:12px; color:#9ca3af; margin-bottom:6px; }
+
+    .event {
+      background:linear-gradient(120deg,#22c55e,#4ade80);
+      color:#022c22;
+      padding:4px 6px;
+      border-radius:6px;
+      font-size:12px;
+      margin-bottom:4px;
+      cursor:pointer;
+    }
   </style>
 </head>
 <body>
-  <header>
-    <div>TimberNova • Calendar</div>
-    <nav>
-      <a href="dashboard.html">Dashboard</a>
-      <a href="contracts.html">Contracts</a>
-      <a href="calendar.html">Calendar</a>
-      <a href="trees.html">Trees</a>
-      <a href="network.html">Network</a>
-      <a href="stores.html">Stores</a>
-      <a href="calls.html">Calls</a>
-      <a href="#" id="logout">Logout</a>
-    </nav>
-  </header>
 
-  <main>
-    <section class="calendar">
-      <div class="cal-header">
-        <button id="prevMonth">‹</button>
-        <div id="monthLabel"></div>
-        <button id="nextMonth">›</button>
-      </div>
-      <div class="cal-grid" id="calendarGrid">
-        <!-- day names + cells -->
-      </div>
-    </section>
+<header>
+  <div>TimberNova • Calendar</div>
+  <nav>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="contracts.html">Contracts</a>
+    <a href="calendar.html">Calendar</a>
+    <a href="trees.html">Trees</a>
+    <a href="network.html">Network</a>
+    <a href="stores.html">Stores</a>
+    <a href="calls.html">Calls</a>
+    <a href="#" id="logout">Logout</a>
+  </nav>
+</header>
 
-    <section class="events">
-      <h3>Events</h3>
-      <div id="eventsList"></div>
-      <div class="new-event">
-        <strong>Add event</strong>
-        <div style="font-size:12px;color:#9ca3af;" id="selectedDateLabel"></div>
-        <input id="eventTitle" placeholder="Job / crew / note…" />
-        <button id="addEvent">Save</button>
-      </div>
-    </section>
-  </main>
+<main>
+  <h1>Calendar</h1>
+  <div class="sub">Scheduled jobs, contract deadlines, and events.</div>
 
-  <footer>TimberNova • Calendar</footer>
+  <div id="calendar" class="calendar-grid"></div>
+</main>
 
-  <script>
-    if (!localStorage.getItem("timberNovaUser")) window.location.href = "index.html";
-    document.getElementById("logout").onclick = () => { localStorage.removeItem("timberNovaUser"); window.location.href="index.html"; };
+<footer>TimberNova • Calendar</footer>
 
-    const monthLabel = document.getElementById("monthLabel");
-    const grid = document.getElementById("calendarGrid");
-    const eventsList = document.getElementById("eventsList");
-    const selectedDateLabel = document.getElementById("selectedDateLabel");
-    let current = new Date();
-    let selectedDate = new Date();
-    const events = {}; // key: yyyy-mm-dd -> [titles]
+<script>
+  if (!localStorage.getItem("timberNovaUser")) window.location.href = "index.html";
+  document.getElementById("logout").onclick = () => {
+    localStorage.removeItem("timberNovaUser");
+    window.location.href = "index.html";
+  };
 
-    function formatKey(d) {
-      return d.toISOString().split("T")[0];
-    }
+  const calendarEl = document.getElementById("calendar");
 
-    function renderCalendar() {
-      grid.innerHTML = "";
-      const year = current.getFullYear();
-      const month = current.getMonth();
-      const first = new Date(year, month, 1);
-      const startDay = first.getDay(); // 0-6
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const prevDays = new Date(year, month, 0).getDate();
+  const events = JSON.parse(localStorage.getItem("timberNovaCalendarEvents") || "[]");
 
-      const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-      monthLabel.textContent = `${monthNames[month]} ${year}`;
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth();
 
-      const dayNames = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-      dayNames.forEach(d => {
-        const div = document.createElement("div");
-        div.className = "cal-day-name";
-        div.textContent = d;
-        grid.appendChild(div);
-      });
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-      const todayKey = formatKey(new Date());
+  // Fill blank days
+  for (let i = 0; i < firstDay; i++) {
+    const blank = document.createElement("div");
+    blank.className = "day";
+    calendarEl.appendChild(blank);
+  }
 
-      for (let i = 0; i < 42; i++) {
-        const cell = document.createElement("div");
-        cell.className = "cal-cell";
-        let dateNum, cellMonth = month, cellYear = year;
-        if (i < startDay) {
-          dateNum = prevDays - (startDay - 1 - i);
-          cell.classList.add("other");
-          cellMonth = month - 1;
-        } else if (i >= startDay + daysInMonth) {
-          dateNum = i - (startDay + daysInMonth) + 1;
-          cell.classList.add("other");
-          cellMonth = month + 1;
-        } else {
-          dateNum = i - startDay + 1;
-        }
-        const cellDate = new Date(cellYear, cellMonth, dateNum);
-        const key = formatKey(cellDate);
-        if (key === todayKey) cell.classList.add("today");
+  // Fill actual days
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
 
-        cell.innerHTML = `<span>${dateNum}</span>`;
-        if (events[key] && events[key].length) {
-          const dot = document.createElement("div");
-          dot.className = "cal-dot";
-          cell.appendChild(dot);
-        }
+    const dayEl = document.createElement("div");
+    dayEl.className = "day";
 
-        cell.onclick = () => {
-          selectedDate = cellDate;
-          renderEvents();
-        };
+    const num = document.createElement("div");
+    num.className = "day-number";
+    num.textContent = d;
+    dayEl.appendChild(num);
 
-        grid.appendChild(cell);
-      }
-      renderEvents();
-    }
+    const todaysEvents = events.filter(e => e.date === dateStr);
 
-    function renderEvents() {
-      const key = formatKey(selectedDate);
-      selectedDateLabel.textContent = `Selected: ${key}`;
-      eventsList.innerHTML = "";
-      const list = events[key] || [];
-      if (!list.length) {
-        eventsList.innerHTML = `<div style="font-size:13px;color:#9ca3af;">No events for this day.</div>`;
-        return;
-      }
-      list.forEach(title => {
-        const div = document.createElement("div");
-        div.className = "event-item";
-        div.innerHTML = `<div>${title}</div><div class="event-date">${key}</div>`;
-        eventsList.appendChild(div);
-      });
-    }
+    todaysEvents.forEach(ev => {
+      const evEl = document.createElement("div");
+      evEl.className = "event";
+      evEl.textContent = ev.title;
+      evEl.onclick = () => {
+        window.location.href = `contract-sign.html?id=${ev.contractId}&mode=view`;
+      };
+      dayEl.appendChild(evEl);
+    });
 
-    document.getElementById("prevMonth").onclick = () => {
-      current.setMonth(current.getMonth() - 1);
-      renderCalendar();
-    };
-    document.getElementById("nextMonth").onclick = () => {
-      current.setMonth(current.getMonth() + 1);
-      renderCalendar();
-    };
-    document.getElementById("addEvent").onclick = () => {
-      const title = document.getElementById("eventTitle").value.trim();
-      if (!title) return;
-      const key = formatKey(selectedDate);
-      if (!events[key]) events[key] = [];
-      events[key].push(title);
-      document.getElementById("eventTitle").value = "";
-      renderCalendar();
-    };
+    calendarEl.appendChild(dayEl);
+  }
+</script>
 
-    renderCalendar();
-  </script>
 </body>
 </html>
