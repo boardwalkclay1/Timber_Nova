@@ -3,384 +3,71 @@
 <head>
   <meta charset="UTF-8" />
   <title>TimberNova — Network</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
   <style>
-    body {
-      margin: 0;
-      background: #05070a;
-      color: #e8f5e9;
-      font-family: "Inter", sans-serif;
-      overflow-x: hidden;
-    }
-
-    /* TOP NAVIGATION BAR */
-    nav {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 52px;
-      background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(10px);
-      display: flex;
-      align-items: center;
-      padding: 0 20px;
-      border-bottom: 1px solid #1b2a2f;
-      z-index: 10000;
-    }
-
-    nav a {
-      color: #e0f0ff;
-      margin-right: 18px;
-      font-size: 14px;
-      text-decoration: none;
-      transition: 0.2s;
-    }
-
-    nav a:hover {
-      color: #9be7ff;
-    }
-
-    nav .brand {
-      color: #9be7ff;
-      font-weight: 600;
-      margin-right: 28px;
-      font-size: 16px;
-      letter-spacing: 0.5px;
-    }
-
-    /* Layout */
-    #layout {
-      display: grid;
-      grid-template-columns: 2fr 1.5fr;
-      height: 100vh;
-      margin-top: 52px; /* Push below nav */
-    }
-
-    #map {
-      height: 100%;
-      width: 100%;
-    }
-
-    #sidebar {
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(8px);
-      padding: 20px;
-      overflow-y: auto;
-      border-left: 1px solid #1b2a2f;
-    }
-
-    h1 {
-      margin-top: 0;
-      font-size: 26px;
-      color: #9be7ff;
-    }
-
-    label {
-      font-size: 13px;
-      opacity: 0.8;
-    }
-
-    input, textarea, select {
-      width: 100%;
-      padding: 8px;
-      margin: 4px 0 10px;
-      border-radius: 6px;
-      border: 1px solid #2c3e50;
-      background: #0f1a20;
-      color: #d0f0ff;
-      font-size: 14px;
-    }
-
-    button {
-      width: 100%;
-      padding: 10px;
-      margin: 6px 0;
-      border-radius: 6px;
-      border: 1px solid #2c3e50;
-      background: #111827;
-      color: #e0f0ff;
-      font-size: 15px;
-    }
-
-    button:hover {
-      background: #1f2937;
-      cursor: pointer;
-    }
-
-    .section {
-      margin-bottom: 18px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid #1b2a2f;
-    }
-
-    .row {
-      display: flex;
-      gap: 8px;
-    }
-
-    .row > div {
-      flex: 1;
-    }
-
-    .profile-item {
-      padding: 8px;
-      margin-bottom: 6px;
-      border-radius: 6px;
-      background: #0b1117;
-      border: 1px solid #1f2933;
-      font-size: 13px;
-      cursor: pointer;
-    }
-
-    .profile-item:hover {
-      background: #111827;
-    }
-
-    /* Leaves */
-    .leaf {
-      position: fixed;
-      top: -10vh;
-      width: 24px;
-      height: 24px;
-      background-image: url('./assets/leaf.png');
-      background-size: cover;
-      opacity: 0.8;
-      animation: fall linear infinite;
-      pointer-events: none;
-      z-index: 9999;
-    }
-
-    @keyframes fall {
-      0% { transform: translateY(0) rotate(0deg); }
-      100% { transform: translateY(110vh) rotate(360deg); }
-    }
-
-    /* Tree name + image */
-    #tree-name {
-      position: fixed;
-      bottom: 12px;
-      right: 20px;
-      font-family: "Dancing Script", cursive;
-      font-size: 26px;
-      color: #c8ffda;
-      opacity: 0.9;
-      z-index: 9999;
-    }
-
-    #tree-image {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 160px;
-      opacity: 0.25;
-      z-index: 9998;
-    }
+    body { margin:0; background:#020617; color:#f9fafb; font-family:system-ui,sans-serif; display:flex; flex-direction:column; min-height:100vh; }
+    header, footer { padding:16px 24px; background:rgba(2,6,23,0.9); border-bottom:1px solid rgba(148,163,184,0.3); display:flex; justify-content:space-between; align-items:center; }
+    footer { border-top:1px solid rgba(148,163,184,0.3); border-bottom:none; margin-top:auto; }
+    nav a { color:#9ca3af; text-decoration:none; margin-left:12px; font-size:14px; padding:6px 10px; border-radius:999px; }
+    nav a:hover { background:rgba(148,163,184,0.2); color:#e5e7eb; }
+    main { padding:24px; max-width:1100px; margin:0 auto; display:grid; grid-template-columns:1.4fr 1fr; gap:24px; }
+    @media (max-width:900px){ main{grid-template-columns:1fr;} }
+    .panel { background:rgba(15,23,42,0.9); border-radius:16px; border:1px solid rgba(148,163,184,0.3); padding:16px; }
+    .map-placeholder { height:260px; border-radius:14px; border:1px solid rgba(148,163,184,0.3); background:linear-gradient(135deg,#0f172a,#1e293b); display:flex; align-items:center; justify-content:center; color:#9ca3af; font-size:14px; margin-top:10px; }
+    .crew-item { padding:8px 0; border-bottom:1px solid rgba(148,163,184,0.25); font-size:14px; display:flex; justify-content:space-between; }
+    .crew-item:last-child { border-bottom:none; }
+    .status-dot { width:8px; height:8px; border-radius:999px; background:#4ade80; margin-right:6px; }
   </style>
 </head>
-
 <body>
+  <header>
+    <div>TimberNova • Network</div>
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="contracts.html">Contracts</a>
+      <a href="calendar.html">Calendar</a>
+      <a href="trees.html">Trees</a>
+      <a href="network.html">Network</a>
+      <a href="stores.html">Stores</a>
+      <a href="calls.html">Calls</a>
+      <a href="#" id="logout">Logout</a>
+    </nav>
+  </header>
 
-  <!-- TOP NAV -->
-  <nav>
-    <span class="brand">TimberNova</span>
-    <a href="index.html">Home</a>
-    <a href="profile.html">Profile</a>
-    <a href="contracts.html">Contracts</a>
-    <a href="calendar.html">Calendar</a>
-    <a href="trees.html">Trees</a>
-    <a href="network.html">Network</a>
-    <a href="stores.html">Stores</a>
-    <a href="webrtc.html">Calls</a>
-  </nav>
-
-  <div id="layout">
-    <div id="map"></div>
-
-    <div id="sidebar">
-      <h1>Tree Crew Network</h1>
-
-      <div class="section">
-        <h3 style="margin: 0 0 8px;">Your Networking Profile</h3>
-        <div class="row">
-          <div>
-            <label>Name</label>
-            <input id="net-name" placeholder="Your name" />
-          </div>
-          <div>
-            <label>Role</label>
-            <input id="net-role" placeholder="Climber, Ground, Sales, etc." />
-          </div>
-        </div>
-
-        <div class="row">
-          <div>
-            <label>Daily Rate ($)</label>
-            <input id="net-rate" type="number" />
-          </div>
-          <div>
-            <label>City / Area</label>
-            <input id="net-area" />
-          </div>
-        </div>
-
-        <label>Contact</label>
-        <input id="net-contact" placeholder="Phone / Email" />
-
-        <label>Skills</label>
-        <textarea id="net-skills" rows="2" placeholder="Crane work, removals, storm cleanup, etc."></textarea>
-
-        <button id="btn-save-net">Save Networking Profile</button>
+  <main>
+    <section class="panel">
+      <h2>Crew map</h2>
+      <div class="map-placeholder">
+        Live crew locations from timberNovaMap.js
       </div>
+    </section>
 
-      <div class="section">
-        <h3 style="margin: 0 0 8px;">Find Tree Pros</h3>
-        <div class="row">
-          <div>
-            <label>Filter by Role</label>
-            <input id="filter-role" placeholder="Climber, Ground, etc." />
-          </div>
-          <div>
-            <label>Max Rate ($)</label>
-            <input id="filter-rate" type="number" />
-          </div>
-        </div>
-        <button id="btn-apply-filter">Apply Filter</button>
-      </div>
+    <section class="panel">
+      <h2>Crew presence</h2>
+      <div id="crewList"></div>
+    </section>
+  </main>
 
-      <div class="section">
-        <h3 style="margin: 0 0 8px;">Directory</h3>
-        <div id="net-list"></div>
-      </div>
+  <footer>TimberNova • Network</footer>
 
-      <div class="section">
-        <button id="btn-view-on-map">View Selected on Map</button>
-        <pre id="net-detail" style="white-space: pre-wrap; font-size: 12px; opacity: 0.8;"></pre>
-      </div>
-    </div>
-  </div>
+  <script>
+    if (!localStorage.getItem("timberNovaUser")) window.location.href = "index.html";
+    document.getElementById("logout").onclick = () => { localStorage.removeItem("timberNovaUser"); window.location.href="index.html"; };
 
-  <div id="tree-name"></div>
-  <img id="tree-image" />
-
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <script type="module">
-    import { createTimberNovaMap2 } from './modules/timbernova-map2/timberNovaMap2.js';
-
-    const tm = createTimberNovaMap2({ containerId: 'map' });
-
-    const fields = {
-      name: document.getElementById('net-name'),
-      role: document.getElementById('net-role'),
-      rate: document.getElementById('net-rate'),
-      area: document.getElementById('net-area'),
-      contact: document.getElementById('net-contact'),
-      skills: document.getElementById('net-skills')
-    };
-
-    const btnSave = document.getElementById('btn-save-net');
-    const listEl = document.getElementById('net-list');
-    const detailEl = document.getElementById('net-detail');
-    const filterRole = document.getElementById('filter-role');
-    const filterRate = document.getElementById('filter-rate');
-    const btnFilter = document.getElementById('btn-apply-filter');
-    const btnViewMap = document.getElementById('btn-view-on-map');
-
-    let profiles = [];
-    let selectedId = null;
-
-    function loadProfiles() {
-      const saved = localStorage.getItem('timbernova_network');
-      if (!saved) return;
-      profiles = JSON.parse(saved);
-      renderList();
-    }
-
-    function saveProfiles() {
-      localStorage.setItem('timbernova_network', JSON.stringify(profiles));
-    }
-
-    function renderList(filter = {}) {
-      listEl.innerHTML = '';
-      const { role, maxRate } = filter;
-
-      profiles
-        .filter(p => {
-          if (role && !p.role.toLowerCase().includes(role.toLowerCase())) return false;
-          if (maxRate && p.rate && p.rate > maxRate) return false;
-          return true;
-        })
-        .forEach(p => {
-          const div = document.createElement('div');
-          div.className = 'profile-item';
-          div.textContent = `${p.name} — ${p.role} — $${p.rate}/day`;
-          div.onclick = () => {
-            selectedId = p.id;
-            detailEl.textContent = JSON.stringify(p, null, 2);
-          };
-          listEl.appendChild(div);
-        });
-    }
-
-    btnSave.onclick = () => {
-      const profile = {
-        id: Date.now().toString(),
-        name: fields.name.value.trim(),
-        role: fields.role.value.trim(),
-        rate: parseFloat(fields.rate.value || '0'),
-        area: fields.area.value.trim(),
-        contact: fields.contact.value.trim(),
-        skills: fields.skills.value.trim(),
-        createdAt: new Date().toISOString()
-      };
-
-      profiles.push(profile);
-      saveProfiles();
-      renderList();
-      detailEl.textContent = JSON.stringify(profile, null, 2);
-    };
-
-    btnFilter.onclick = () => {
-      const role = filterRole.value.trim();
-      const maxRate = parseFloat(filterRate.value || '0') || null;
-      renderList({ role, maxRate });
-    };
-
-    btnViewMap.onclick = async () => {
-      if (!selectedId) return;
-      const p = profiles.find(x => x.id === selectedId);
-      if (!p || !p.area) return;
-      await tm.goToAddress(p.area);
-    };
-
-    loadProfiles();
-
-    // Leaves
-    function spawnLeaf() {
-      const leaf = document.createElement('div');
-      leaf.className = 'leaf';
-      leaf.style.left = Math.random() * 100 + 'vw';
-      leaf.style.animationDuration = 4 + Math.random() * 6 + 's';
-      leaf.style.opacity = 0.5 + Math.random() * 0.5;
-      document.body.appendChild(leaf);
-      setTimeout(() => leaf.remove(), 10000);
-    }
-    setInterval(spawnLeaf, 500);
-
-    // Tree name + image
-    const trees = [
-      { name: 'White Oak', img: './assets/trees/white-oak.png' },
-      { name: 'Red Maple', img: './assets/trees/red-maple.png' },
-      { name: 'Loblolly Pine', img: './assets/trees/loblolly.png' },
-      { name: 'Sweetgum', img: './assets/trees/sweetgum.png' },
-      { name: 'Sycamore', img: './assets/trees/sycamore.png' }
+    const crew = [
+      { name:"Marcus", role:"Climber", online:true },
+      { name:"Tasha", role:"Operator", online:true },
+      { name:"Luis", role:"Ground crew", online:false }
     ];
 
-    const chosen = trees[Math.floor(Math.random() * trees.length)];
-    document.getElementById('tree-name').textContent = chosen.name;
-    document.getElementById('tree-image').src = chosen.img;
+    const crewList = document.getElementById("crewList");
+    crew.forEach(c => {
+      const div = document.createElement("div");
+      div.className = "crew-item";
+      div.innerHTML = `<span><span class="status-dot" style="background:${c.online ? '#4ade80' : '#6b7280'}"></span>${c.name} — ${c.role}</span><span style="font-size:12px;color:#9ca3af;">${c.online ? "Online" : "Offline"}</span>`;
+      crewList.appendChild(div);
+    });
   </script>
 </body>
 </html>
