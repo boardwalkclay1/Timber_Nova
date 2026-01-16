@@ -2,230 +2,89 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>TimberNova — Tree Encyclopedia</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
+  <title>TimberNova — Trees</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
   <style>
-    body {
-      margin: 0;
-      background: #05070a;
-      color: #e8f5e9;
-      font-family: "Inter", sans-serif;
-      overflow-x: hidden;
-    }
-
-    /* TOP NAVIGATION BAR */
-    nav {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 52px;
-      background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(10px);
-      display: flex;
-      align-items: center;
-      padding: 0 20px;
-      border-bottom: 1px solid #1b2a2f;
-      z-index: 10000;
-    }
-
-    nav a {
-      color: #e0f0ff;
-      margin-right: 18px;
-      font-size: 14px;
-      text-decoration: none;
-      transition: 0.2s;
-    }
-
-    nav a:hover {
-      color: #9be7ff;
-    }
-
-    nav .brand {
-      color: #9be7ff;
-      font-weight: 600;
-      margin-right: 28px;
-      font-size: 16px;
-      letter-spacing: 0.5px;
-    }
-
-    /* Layout */
-    #layout {
-      display: grid;
-      grid-template-columns: 2fr 1.5fr;
-      height: 100vh;
-      margin-top: 52px; /* Push below nav */
-    }
-
-    #map {
-      height: 100%;
-      width: 100%;
-    }
-
-    #sidebar {
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(8px);
-      padding: 20px;
-      overflow-y: auto;
-      border-left: 1px solid #1b2a2f;
-    }
-
-    h1 {
-      margin-top: 0;
-      font-size: 26px;
-      color: #9be7ff;
-    }
-
-    input, button {
-      width: 100%;
-      padding: 10px;
-      margin: 6px 0;
-      border-radius: 6px;
-      border: 1px solid #2c3e50;
-      background: #0f1a20;
-      color: #d0f0ff;
-      font-size: 15px;
-    }
-
-    button:hover {
-      background: #1f2937;
-      cursor: pointer;
-    }
-
-    pre {
-      white-space: pre-wrap;
-      font-size: 13px;
-      opacity: 0.85;
-    }
-
-    /* Leaves */
-    .leaf {
-      position: fixed;
-      top: -10vh;
-      width: 24px;
-      height: 24px;
-      background-image: url('./assets/leaf.png');
-      background-size: cover;
-      opacity: 0.8;
-      animation: fall linear infinite;
-      pointer-events: none;
-      z-index: 9999;
-    }
-
-    @keyframes fall {
-      0% { transform: translateY(0) rotate(0deg); }
-      100% { transform: translateY(110vh) rotate(360deg); }
-    }
-
-    /* Tree name + image */
-    #tree-name {
-      position: fixed;
-      bottom: 12px;
-      right: 20px;
-      font-family: "Dancing Script", cursive;
-      font-size: 26px;
-      color: #c8ffda;
-      opacity: 0.9;
-      z-index: 9999;
-    }
-
-    #tree-image {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 160px;
-      opacity: 0.25;
-      z-index: 9998;
-    }
+    body { margin:0; background:#020617; color:#f9fafb; font-family:system-ui,sans-serif; display:flex; flex-direction:column; min-height:100vh; }
+    header, footer { padding:16px 24px; background:rgba(2,6,23,0.9); border-bottom:1px solid rgba(148,163,184,0.3); display:flex; justify-content:space-between; align-items:center; }
+    footer { border-top:1px solid rgba(148,163,184,0.3); border-bottom:none; margin-top:auto; }
+    nav a { color:#9ca3af; text-decoration:none; margin-left:12px; font-size:14px; padding:6px 10px; border-radius:999px; }
+    nav a:hover { background:rgba(148,163,184,0.2); color:#e5e7eb; }
+    main { padding:24px; display:grid; grid-template-columns:1.4fr 1fr; gap:24px; max-width:1100px; margin:0 auto; }
+    @media (max-width:900px){ main{grid-template-columns:1fr;} }
+    .panel { background:rgba(15,23,42,0.9); border-radius:16px; border:1px solid rgba(148,163,184,0.3); padding:16px; }
+    .map-placeholder { height:260px; border-radius:14px; border:1px solid rgba(148,163,184,0.3); background:linear-gradient(135deg,#0f172a,#1e293b); display:flex; align-items:center; justify-content:center; color:#9ca3af; font-size:14px; margin-top:10px; }
+    .tree-name { font-family:"Georgia",serif; font-size:22px; color:#4ade80; margin-bottom:6px; }
+    .tree-search input { width:100%; border-radius:10px; border:1px solid rgba(148,163,184,0.6); background:rgba(15,23,42,0.9); color:#e5e7eb; padding:8px 10px; font-size:13px; margin-top:6px; }
+    .tree-search button { margin-top:8px; border:none; border-radius:10px; padding:8px 14px; font-size:13px; background:linear-gradient(120deg,#22c55e,#4ade80); color:#022c22; cursor:pointer; }
   </style>
 </head>
-
 <body>
+  <header>
+    <div>TimberNova • Trees</div>
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="contracts.html">Contracts</a>
+      <a href="calendar.html">Calendar</a>
+      <a href="trees.html">Trees</a>
+      <a href="network.html">Network</a>
+      <a href="stores.html">Stores</a>
+      <a href="calls.html">Calls</a>
+      <a href="#" id="logout">Logout</a>
+    </nav>
+  </header>
 
-  <!-- TOP NAV -->
-  <nav>
-    <span class="brand">TimberNova</span>
-    <a href="index.html">Home</a>
-    <a href="profile.html">Profile</a>
-    <a href="contracts.html">Contracts</a>
-    <a href="calendar.html">Calendar</a>
-    <a href="trees.html">Trees</a>
-    <a href="network.html">Network</a>
-    <a href="stores.html">Stores</a>
-    <a href="webrtc.html">Calls</a>
-  </nav>
+  <main>
+    <section class="panel">
+      <h2>Tree Map</h2>
+      <div class="map-placeholder">
+        Tree markers & species from timberNovaMap.js
+      </div>
+    </section>
 
-  <div id="layout">
-    <div id="map"></div>
+    <section class="panel">
+      <h2>Species lookup</h2>
+      <div class="tree-search">
+        <label style="font-size:12px;color:#9ca3af;">Common or Latin name</label>
+        <input id="treeQuery" placeholder="e.g. white oak, Quercus alba" />
+        <button id="treeSearch">Lookup</button>
+      </div>
+      <div style="margin-top:14px;">
+        <div class="tree-name" id="treeName">Tree of the day</div>
+        <div id="treeDesc" style="font-size:14px;color:#9ca3af;">Pick a species to see quick intel.</div>
+      </div>
+    </section>
+  </main>
 
-    <div id="sidebar">
-      <h1>Tree Encyclopedia</h1>
+  <footer>TimberNova • Trees</footer>
 
-      <input id="tree-query" placeholder="Search tree species or diseases..." />
-      <button id="btn-tree-search">Search</button>
+  <script>
+    if (!localStorage.getItem("timberNovaUser")) window.location.href = "index.html";
+    document.getElementById("logout").onclick = () => { localStorage.removeItem("timberNovaUser"); window.location.href="index.html"; };
 
-      <pre id="tree-info"></pre>
-    </div>
-  </div>
-
-  <div id="tree-name"></div>
-  <img id="tree-image" />
-
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-  <script type="module">
-    import { createTimberNovaMap2 } from './modules/timbernova-map2/timberNovaMap2.js';
-
-    const tm = createTimberNovaMap2({ containerId: 'map' });
-
-    const input = document.getElementById('tree-query');
-    const btn = document.getElementById('btn-tree-search');
-    const info = document.getElementById('tree-info');
-
-    async function lookupTree(q) {
-      const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(q)}`;
-      const res = await fetch(url);
-      if (!res.ok) return null;
-      return await res.json();
-    }
-
-    btn.onclick = async () => {
-      const q = input.value.trim();
-      if (!q) return;
-      info.textContent = "Searching...";
-      const data = await lookupTree(q);
-      if (!data) {
-        info.textContent = "No information found.";
-        return;
-      }
-      info.textContent = `${data.title}\n\n${data.extract}`;
+    const samples = {
+      "quercus alba": "White oak — strong, long-lived, excellent shade and habitat.",
+      "white oak": "White oak — strong, long-lived, excellent shade and habitat.",
+      "pinus taeda": "Loblolly pine — fast-growing, common in the Southeast, used for lumber.",
+      "loblolly": "Loblolly pine — fast-growing, common in the Southeast, used for lumber.",
+      "acer rubrum": "Red maple — adaptable, vibrant fall color, common in urban and rural sites.",
+      "red maple": "Red maple — adaptable, vibrant fall color, common in urban and rural sites."
     };
 
-    // Leaves
-    function spawnLeaf() {
-      const leaf = document.createElement("div");
-      leaf.className = "leaf";
-      leaf.style.left = Math.random() * 100 + "vw";
-      leaf.style.animationDuration = 4 + Math.random() * 6 + "s";
-      leaf.style.opacity = 0.5 + Math.random() * 0.5;
-      document.body.appendChild(leaf);
-      setTimeout(() => leaf.remove(), 10000);
-    }
-    setInterval(spawnLeaf, 500);
-
-    // Random tree art
-    const trees = [
-      { name: "White Oak", img: "./assets/trees/white-oak.png" },
-      { name: "Red Maple", img: "./assets/trees/red-maple.png" },
-      { name: "Loblolly Pine", img: "./assets/trees/loblolly.png" },
-      { name: "Sweetgum", img: "./assets/trees/sweetgum.png" },
-      { name: "Sycamore", img: "./assets/trees/sycamore.png" }
-    ];
-
-    const chosen = trees[Math.floor(Math.random() * trees.length)];
-    document.getElementById("tree-name").textContent = chosen.name;
-    document.getElementById("tree-image").src = chosen.img;
+    document.getElementById("treeSearch").onclick = () => {
+      const q = document.getElementById("treeQuery").value.trim().toLowerCase();
+      const nameEl = document.getElementById("treeName");
+      const descEl = document.getElementById("treeDesc");
+      if (!q) return;
+      if (samples[q]) {
+        nameEl.textContent = q.split(" ").map(w => w[0].toUpperCase() + w.slice(1)).join(" ");
+        descEl.textContent = samples[q];
+      } else {
+        nameEl.textContent = "Unknown species";
+        descEl.textContent = "We don’t have this one in the quick lookup yet.";
+      }
+    };
   </script>
 </body>
 </html>
