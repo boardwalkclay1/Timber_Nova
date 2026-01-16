@@ -5,6 +5,12 @@
   <title>TimberNova — Trees</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="styles.css" />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
   <style>
     body { margin:0; background:#020617; color:#f9fafb; font-family:system-ui,sans-serif; display:flex; flex-direction:column; min-height:100vh; }
     header, footer { padding:16px 24px; background:rgba(2,6,23,0.9); border-bottom:1px solid rgba(148,163,184,0.3); display:flex; justify-content:space-between; align-items:center; }
@@ -14,10 +20,11 @@
     main { padding:24px; display:grid; grid-template-columns:1.4fr 1fr; gap:24px; max-width:1100px; margin:0 auto; }
     @media (max-width:900px){ main{grid-template-columns:1fr;} }
     .panel { background:rgba(15,23,42,0.9); border-radius:16px; border:1px solid rgba(148,163,184,0.3); padding:16px; }
-    .map-placeholder { height:260px; border-radius:14px; border:1px solid rgba(148,163,184,0.3); background:linear-gradient(135deg,#0f172a,#1e293b); display:flex; align-items:center; justify-content:center; color:#9ca3af; font-size:14px; margin-top:10px; }
+    #trees-map { height:260px; border-radius:14px; border:1px solid rgba(148,163,184,0.3); }
     .tree-name { font-family:"Georgia",serif; font-size:22px; color:#4ade80; margin-bottom:6px; }
     .tree-search input { width:100%; border-radius:10px; border:1px solid rgba(148,163,184,0.6); background:rgba(15,23,42,0.9); color:#e5e7eb; padding:8px 10px; font-size:13px; margin-top:6px; }
     .tree-search button { margin-top:8px; border:none; border-radius:10px; padding:8px 14px; font-size:13px; background:linear-gradient(120deg,#22c55e,#4ade80); color:#022c22; cursor:pointer; }
+    .intel { font-size:13px; color:#9ca3af; margin-top:10px; line-height:1.5; }
   </style>
 </head>
 <body>
@@ -37,52 +44,73 @@
 
   <main>
     <section class="panel">
-      <h2>Tree Map</h2>
-      <div class="map-placeholder">
-        Tree markers & species from timberNovaMap.js
-      </div>
+      <h2>Tree map</h2>
+      <div id="trees-map"></div>
     </section>
 
     <section class="panel">
-      <h2>Species lookup</h2>
+      <h2>Address intel</h2>
       <div class="tree-search">
-        <label style="font-size:12px;color:#9ca3af;">Common or Latin name</label>
-        <input id="treeQuery" placeholder="e.g. white oak, Quercus alba" />
-        <button id="treeSearch">Lookup</button>
+        <label style="font-size:12px;color:#9ca3af;">Job address</label>
+        <input id="addressInput" placeholder="123 Oak St, City…" />
+        <button id="addressIntelBtn">Get lumberjack intel</button>
       </div>
-      <div style="margin-top:14px;">
-        <div class="tree-name" id="treeName">Tree of the day</div>
-        <div id="treeDesc" style="font-size:14px;color:#9ca3af;">Pick a species to see quick intel.</div>
+      <div class="intel" id="intelOutput">
+        Enter an address to see nearby powerlines, structures, and stores.
       </div>
     </section>
   </main>
 
   <footer>TimberNova • Trees</footer>
 
-  <script>
-    if (!localStorage.getItem("timberNovaUser")) window.location.href = "index.html";
-    document.getElementById("logout").onclick = () => { localStorage.removeItem("timberNovaUser"); window.location.href="index.html"; };
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script type="module">
+    import { createTimberNovaMap2 } from "./modules/timbernova-map2/timberNovaMap2.js";
 
-    const samples = {
-      "quercus alba": "White oak — strong, long-lived, excellent shade and habitat.",
-      "white oak": "White oak — strong, long-lived, excellent shade and habitat.",
-      "pinus taeda": "Loblolly pine — fast-growing, common in the Southeast, used for lumber.",
-      "loblolly": "Loblolly pine — fast-growing, common in the Southeast, used for lumber.",
-      "acer rubrum": "Red maple — adaptable, vibrant fall color, common in urban and rural sites.",
-      "red maple": "Red maple — adaptable, vibrant fall color, common in urban and rural sites."
+    if (!localStorage.getItem("timberNovaUser")) window.location.href = "index.html";
+    document.getElementById("logout").onclick = () => {
+      localStorage.removeItem("timberNovaUser");
+      window.location.href = "index.html";
     };
 
-    document.getElementById("treeSearch").onclick = () => {
-      const q = document.getElementById("treeQuery").value.trim().toLowerCase();
-      const nameEl = document.getElementById("treeName");
-      const descEl = document.getElementById("treeDesc");
-      if (!q) return;
-      if (samples[q]) {
-        nameEl.textContent = q.split(" ").map(w => w[0].toUpperCase() + w.slice(1)).join(" ");
-        descEl.textContent = samples[q];
-      } else {
-        nameEl.textContent = "Unknown species";
-        descEl.textContent = "We don’t have this one in the quick lookup yet.";
+    const mapApi = createTimberNovaMap2({
+      containerId: "trees-map",
+      defaultZoom: 14
+    });
+
+    const intelOutput = document.getElementById("intelOutput");
+    document.getElementById("addressIntelBtn").onclick = async () => {
+      const addr = document.getElementById("addressInput").value.trim();
+      if (!addr) return;
+      intelOutput.textContent = "Pulling lumberjack intel…";
+
+      try {
+        const intel = await mapApi.getLumberjackIntelForAddress(addr);
+        if (!intel) {
+          intelOutput.textContent = "No intel found for that address.";
+          return;
+        }
+
+        const powerCount = intel.powerlines.length;
+        const structCount = intel.structures.length;
+        const chainsawStores = intel.stores.chainsaw.length;
+        const ropeStores = intel.stores.rope.length;
+        const treeStores = intel.stores.tree.length;
+
+        intelOutput.innerHTML = `
+          <strong style="color:#e5e7eb;">${intel.address}</strong><br/>
+          Powerlines nearby: <span style="color:#facc15;">${powerCount}</span><br/>
+          Structures nearby: <span style="color:#f97316;">${structCount}</span><br/>
+          Chainsaw stores in area: <span style="color:#4ade80;">${chainsawStores}</span><br/>
+          Rope stores in area: <span style="color:#4ade80;">${ropeStores}</span><br/>
+          Tree equipment stores: <span style="color:#4ade80;">${treeStores}</span>
+        `;
+      } catch (e) {
+        intelOutput.textContent = "Error fetching intel for that address.";
       }
     };
   </script>
