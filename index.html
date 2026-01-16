@@ -2,332 +2,858 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>TimberNova — Field Operations</title>
-
-  <!-- Leaflet -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
+  <title>TimberNova — Field Intelligence for Tree Crews</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
   <style>
-    body {
-      margin: 0;
-      background: #0a0f14;
-      color: #e8f5e9;
-      font-family: "Inter", sans-serif;
-      overflow-x: hidden;
+    /* TimberNova Landing + Auth */
+
+    :root {
+      --bg: #05070b;
+      --bg-alt: #0b1018;
+      --accent: #4ade80;
+      --accent-soft: rgba(74, 222, 128, 0.15);
+      --accent-strong: #22c55e;
+      --danger: #f97373;
+      --text-main: #f9fafb;
+      --text-soft: #9ca3af;
+      --card-bg: rgba(15, 23, 42, 0.9);
+      --border-subtle: rgba(148, 163, 184, 0.25);
+      --glow: 0 0 40px rgba(74, 222, 128, 0.35);
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --radius-pill: 999px;
+      --transition-fast: 0.18s ease-out;
+      --transition-med: 0.25s ease-out;
     }
 
-    /* TOP NAVIGATION BAR */
-    nav {
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Inter", sans-serif;
+      background: radial-gradient(circle at top, #020617 0, #020617 40%, #020617 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tn-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Subtle cinematic noise + glow */
+    .tn-page::before {
+      content: "";
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 52px;
-      background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(10px);
+      inset: -40px;
+      background:
+        radial-gradient(circle at 10% 0%, rgba(74, 222, 128, 0.12), transparent 55%),
+        radial-gradient(circle at 90% 100%, rgba(56, 189, 248, 0.12), transparent 55%);
+      opacity: 0.9;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .tn-page::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='noStitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.18'/%3E%3C/svg%3E");
+      mix-blend-mode: soft-light;
+      opacity: 0.6;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    header.tn-header {
+      padding: 20px 32px;
       display: flex;
       align-items: center;
-      padding: 0 20px;
-      border-bottom: 1px solid #1b2a2f;
-      z-index: 10000;
+      justify-content: space-between;
+      position: relative;
+      z-index: 2;
     }
 
-    nav a {
-      color: #e0f0ff;
-      margin-right: 18px;
-      font-size: 14px;
-      text-decoration: none;
-      transition: 0.2s;
+    .tn-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
-    nav a:hover {
-      color: #9be7ff;
+    .tn-logo-mark {
+      width: 32px;
+      height: 32px;
+      border-radius: 12px;
+      background: radial-gradient(circle at 30% 0%, #bbf7d0, #22c55e 40%, #052e16 100%);
+      box-shadow: 0 0 24px rgba(34, 197, 94, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #022c22;
+      font-weight: 800;
+      font-size: 18px;
     }
 
-    nav .brand {
-      color: #9be7ff;
+    .tn-logo-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tn-logo-title {
       font-weight: 600;
-      margin-right: 28px;
-      font-size: 16px;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 13px;
+      color: #e5e7eb;
     }
 
-    /* Layout */
-    #layout {
+    .tn-logo-sub {
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    .tn-header-cta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .tn-header-pill {
+      padding: 6px 12px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-soft);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tn-header-pill span {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: radial-gradient(circle, #4ade80, #16a34a);
+      box-shadow: 0 0 10px rgba(74, 222, 128, 0.9);
+    }
+
+    .tn-header-link {
+      font-size: 13px;
+      color: var(--text-soft);
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: var(--radius-pill);
+      transition: background var(--transition-fast), color var(--transition-fast);
+    }
+
+    .tn-header-link:hover {
+      background: rgba(15, 23, 42, 0.9);
+      color: #e5e7eb;
+    }
+
+    main.tn-main {
+      flex: 1;
       display: grid;
-      grid-template-columns: 2fr 1fr;
-      height: 100vh;
-      margin-top: 52px; /* Push layout below nav */
-    }
-
-    #map {
-      height: 100%;
-      width: 100%;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+      gap: 32px;
+      padding: 10px 32px 32px;
       position: relative;
       z-index: 1;
     }
 
-    #sidebar {
-      background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(8px);
-      padding: 20px;
-      overflow-y: auto;
-      border-left: 1px solid #1b2a2f;
+    @media (max-width: 960px) {
+      main.tn-main {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 10px 20px 24px;
+      }
+      header.tn-header {
+        padding: 16px 20px;
+      }
     }
 
-    h1 {
-      margin-top: 0;
-      font-size: 28px;
-      font-weight: 600;
-      letter-spacing: 1px;
-      color: #9be7ff;
+    .tn-hero {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 24px;
+      padding-right: 20px;
     }
 
-    input, button {
+    .tn-hero-tagline {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: rgba(15, 23, 42, 0.8);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--text-soft);
+      width: fit-content;
+    }
+
+    .tn-hero-tagline span {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 0%, #bbf7d0, #22c55e 40%, #052e16 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: #022c22;
+      box-shadow: 0 0 16px rgba(34, 197, 94, 0.7);
+    }
+
+    .tn-hero-title {
+      font-size: clamp(32px, 4vw, 44px);
+      line-height: 1.1;
+      font-weight: 650;
+      letter-spacing: -0.03em;
+    }
+
+    .tn-hero-title span {
+      background: linear-gradient(120deg, #bbf7d0, #4ade80, #22c55e, #a5f3fc);
+      -webkit-background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 30px rgba(34, 197, 94, 0.4);
+    }
+
+    .tn-hero-sub {
+      font-size: 14px;
+      color: var(--text-soft);
+      max-width: 520px;
+    }
+
+    .tn-hero-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .tn-hero-chip {
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: rgba(15, 23, 42, 0.9);
+      padding: 10px 12px;
+      font-size: 11px;
+      color: var(--text-soft);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .tn-hero-chip strong {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #e5e7eb;
+    }
+
+    .tn-hero-footnote {
+      margin-top: 12px;
+      font-size: 11px;
+      color: #6b7280;
+    }
+
+    .tn-hero-footnote span {
+      color: #a5f3fc;
+    }
+
+    .tn-auth-card {
+      align-self: center;
+      border-radius: 24px;
+      border: 1px solid var(--border-subtle);
+      background: radial-gradient(circle at top left, rgba(74, 222, 128, 0.12), transparent 55%),
+        radial-gradient(circle at bottom right, rgba(56, 189, 248, 0.12), transparent 55%),
+        rgba(15, 23, 42, 0.96);
+      box-shadow: 0 24px 80px rgba(15, 23, 42, 0.9);
+      padding: 20px 20px 18px;
+      max-width: 380px;
       width: 100%;
-      padding: 10px;
-      margin: 6px 0;
-      border-radius: 6px;
-      border: 1px solid #2c3e50;
-      background: #0f1a20;
-      color: #d0f0ff;
-      font-size: 15px;
+      position: relative;
+      overflow: hidden;
     }
 
-    button:hover {
-      background: #1b2a2f;
-      cursor: pointer;
-    }
-
-    .section {
-      margin-bottom: 20px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid #1b2a2f;
-    }
-
-    /* Falling Leaves */
-    .leaf {
-      position: fixed;
-      top: -10vh;
-      width: 24px;
-      height: 24px;
-      background-image: url('./assets/leaf.png');
-      background-size: cover;
-      opacity: 0.8;
-      animation: fall linear infinite;
+    .tn-auth-card::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background: radial-gradient(circle at 10% 0%, rgba(74, 222, 128, 0.18), transparent 55%);
+      opacity: 0.4;
       pointer-events: none;
-      z-index: 9999;
     }
 
-    @keyframes fall {
-      0% { transform: translateY(0) rotate(0deg); }
-      100% { transform: translateY(110vh) rotate(360deg); }
+    .tn-auth-header {
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 14px;
     }
 
-    /* Tree Name Tag */
-    #tree-name {
-      position: fixed;
-      bottom: 12px;
-      right: 20px;
-      font-family: "Dancing Script", cursive;
-      font-size: 28px;
-      color: #c8ffda;
+    .tn-auth-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .tn-auth-sub {
+      font-size: 12px;
+      color: var(--text-soft);
+      margin-top: 2px;
+    }
+
+    .tn-auth-badge {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      background: rgba(15, 23, 42, 0.9);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #e5e7eb;
+    }
+
+    .tn-auth-badge span {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: radial-gradient(circle, #4ade80, #16a34a);
+      box-shadow: 0 0 10px rgba(74, 222, 128, 0.9);
+    }
+
+    .tn-auth-toggle {
+      position: relative;
+      display: flex;
+      border-radius: var(--radius-pill);
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      padding: 3px;
+      margin-bottom: 14px;
+      font-size: 11px;
+    }
+
+    .tn-auth-toggle button {
+      flex: 1;
+      border: none;
+      background: transparent;
+      color: var(--text-soft);
+      padding: 6px 0;
+      border-radius: var(--radius-pill);
+      cursor: pointer;
+      transition: background var(--transition-fast), color var(--transition-fast),
+        transform var(--transition-fast);
+    }
+
+    .tn-auth-toggle button.tn-active {
+      background: linear-gradient(120deg, #22c55e, #4ade80);
+      color: #022c22;
+      font-weight: 600;
+      transform: translateY(-0.5px);
+      box-shadow: var(--glow);
+    }
+
+    .tn-auth-form {
+      position: relative;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .tn-auth-form.tn-visible {
+      display: flex;
+    }
+
+    .tn-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .tn-field label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #9ca3af;
+    }
+
+    .tn-field input {
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: rgba(15, 23, 42, 0.9);
+      padding: 8px 10px;
+      font-size: 13px;
+      color: #e5e7eb;
+      outline: none;
+      transition: border var(--transition-fast), box-shadow var(--transition-fast),
+        background var(--transition-fast), transform var(--transition-fast);
+    }
+
+    .tn-field input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(74, 222, 128, 0.4);
+      background: rgba(15, 23, 42, 1);
+      transform: translateY(-0.5px);
+    }
+
+    .tn-field small {
+      font-size: 11px;
+      color: #6b7280;
+    }
+
+    .tn-auth-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+    }
+
+    .tn-auth-link {
+      font-size: 11px;
+      color: #a5f3fc;
+      cursor: pointer;
+      text-decoration: none;
+      transition: color var(--transition-fast), opacity var(--transition-fast);
+    }
+
+    .tn-auth-link:hover {
+      color: #e0f2fe;
       opacity: 0.9;
-      z-index: 9999;
     }
 
-    /* Tree Image */
-    #tree-image {
+    .tn-auth-submit {
+      margin-top: 8px;
+      border-radius: 12px;
+      border: none;
+      width: 100%;
+      padding: 9px 0;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      cursor: pointer;
+      background: linear-gradient(120deg, #22c55e, #4ade80);
+      color: #022c22;
+      box-shadow: var(--glow);
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast),
+        filter var(--transition-fast);
+    }
+
+    .tn-auth-submit:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.05);
+      box-shadow: 0 0 50px rgba(34, 197, 94, 0.7);
+    }
+
+    .tn-auth-submit:active {
+      transform: translateY(0);
+      box-shadow: 0 0 24px rgba(34, 197, 94, 0.6);
+    }
+
+    .tn-auth-footer {
+      margin-top: 10px;
+      font-size: 11px;
+      color: #6b7280;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tn-auth-footer span {
+      color: #a5f3fc;
+    }
+
+    .tn-auth-status {
+      font-size: 11px;
+      color: #9ca3af;
+      min-height: 14px;
+    }
+
+    .tn-auth-status.tn-error {
+      color: #fecaca;
+    }
+
+    .tn-auth-status.tn-success {
+      color: #bbf7d0;
+    }
+
+    footer.tn-footer {
+      padding: 10px 32px 18px;
+      font-size: 11px;
+      color: #6b7280;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid rgba(15, 23, 42, 0.9);
+      background: linear-gradient(to top, rgba(15, 23, 42, 0.96), transparent);
+      position: relative;
+      z-index: 1;
+    }
+
+    @media (max-width: 960px) {
+      footer.tn-footer {
+        padding: 10px 20px 16px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+    }
+
+    .tn-footer-links {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .tn-footer-links span {
+      cursor: pointer;
+      transition: color var(--transition-fast), opacity var(--transition-fast);
+    }
+
+    .tn-footer-links span:hover {
+      color: #e5e7eb;
+      opacity: 0.9;
+    }
+
+    /* Optional: subtle floating leaves */
+    .tn-leaf {
       position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 180px;
-      opacity: 0.25;
-      z-index: 9998;
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      background: radial-gradient(circle at 30% 0%, #bbf7d0, #22c55e 40%, #14532d 100%);
+      opacity: 0.18;
+      pointer-events: none;
+      filter: blur(0.2px);
+      z-index: 0;
+      animation: tn-fall linear infinite;
+    }
+
+    @keyframes tn-fall {
+      0% {
+        transform: translate3d(var(--x-start), -10%, 0) rotate(0deg);
+      }
+      100% {
+        transform: translate3d(var(--x-end), 110%, 0) rotate(120deg);
+      }
     }
   </style>
 </head>
-
 <body>
-
-  <!-- TOP NAV -->
-  <nav>
-    <span class="brand">TimberNova</span>
-    <a href="index.html">Home</a>
-    <a href="profile.html">Profile</a>
-    <a href="contracts.html">Contracts</a>
-    <a href="calendar.html">Calendar</a>
-    <a href="trees.html">Trees</a>
-    <a href="network.html">Network</a>
-    <a href="stores.html">Stores</a>
-    <a href="webrtc.html">Calls</a>
-  </nav>
-
-  <div id="layout">
-    <div id="map"></div>
-
-    <div id="sidebar">
-      <h1>TimberNova</h1>
-
-      <div class="section">
-        <input id="tree-search" placeholder="Search tree species or diseases..." />
-        <button id="btn-tree-search">Look Up Tree Info</button>
-        <pre id="tree-info" style="white-space: pre-wrap; font-size: 13px;"></pre>
+  <div class="tn-page">
+    <header class="tn-header">
+      <div class="tn-logo">
+        <div class="tn-logo-mark">T</div>
+        <div class="tn-logo-text">
+          <div class="tn-logo-title">TimberNova</div>
+          <div class="tn-logo-sub">Field intelligence for tree crews</div>
+        </div>
       </div>
-
-      <div class="section">
-        <button id="btn-location">Use My Location</button>
-        <input id="input-address" placeholder="Client address..." />
-        <button id="btn-go-address">Go to Address</button>
+      <div class="tn-header-cta">
+        <div class="tn-header-pill">
+          <span></span>
+          LIVE • CREW PLATFORM
+        </div>
+        <div class="tn-header-link" id="tn-header-login-link">Log in</div>
       </div>
+    </header>
 
-      <div class="section">
-        <input id="input-radius" type="number" value="100" />
-        <button id="btn-radius">Set Radius (ft)</button>
-      </div>
+    <main class="tn-main">
+      <section class="tn-hero">
+        <div class="tn-hero-tagline">
+          <span>⛰</span>
+          BUILT FOR CLIMBERS, CREWS & CONTRACTORS
+        </div>
+        <h1 class="tn-hero-title">
+          A cinematic command center<br />
+          for <span>real tree work</span>.
+        </h1>
+        <p class="tn-hero-sub">
+          TimberNova unifies maps, contracts, calendars, crews, stores, and live calls into one
+          field‑ready platform. Designed for the way arborists, climbers, and operators actually move
+          through a day.
+        </p>
 
-      <div class="section">
-        <button id="btn-lumberjack">Lumberjack Intel</button>
-        <pre id="lumberjack-output" style="white-space: pre-wrap; font-size: 13px;"></pre>
-      </div>
+        <div class="tn-hero-grid">
+          <div class="tn-hero-chip">
+            <strong>Live Map & Trees</strong>
+            <span>See jobs, hazards, and species intel on a single glowing map.</span>
+          </div>
+          <div class="tn-hero-chip">
+            <strong>Contracts & Calendar</strong>
+            <span>Lock in work, schedule crews, and never lose track of a job.</span>
+          </div>
+          <div class="tn-hero-chip">
+            <strong>Network & Calls</strong>
+            <span>Coordinate with climbers, operators, and subs in real time.</span>
+          </div>
+        </div>
 
-      <div class="section">
-        <button id="btn-weather">Weather at Center</button>
-        <pre id="weather-output" style="white-space: pre-wrap; font-size: 13px;"></pre>
-      </div>
+        <p class="tn-hero-footnote">
+          First stop: <span>Dashboard</span> — your daily launchpad into jobs, crews, and the map.
+        </p>
+      </section>
 
-      <div class="section">
-        <button id="btn-google">Google Maps Directions</button>
-        <button id="btn-apple">Apple Maps Directions</button>
+      <section class="tn-auth-card" aria-label="TimberNova authentication">
+        <div class="tn-auth-header">
+          <div>
+            <div class="tn-auth-title">Sign in to TimberNova</div>
+            <div class="tn-auth-sub">Verified access to the full dashboard and crew tools.</div>
+          </div>
+          <div class="tn-auth-badge">
+            <span></span>
+            Secure access
+          </div>
+        </div>
+
+        <div class="tn-auth-toggle" role="tablist">
+          <button id="tn-toggle-login" class="tn-active" type="button" role="tab" aria-selected="true">
+            Log in
+          </button>
+          <button id="tn-toggle-signup" type="button" role="tab" aria-selected="false">
+            Create account
+          </button>
+        </div>
+
+        <!-- Login form -->
+        <form id="tn-login-form" class="tn-auth-form tn-visible" autocomplete="on">
+          <div class="tn-field">
+            <label for="tn-login-email">Email</label>
+            <input id="tn-login-email" type="email" name="email" required placeholder="you@crew.com" />
+          </div>
+          <div class="tn-field">
+            <label for="tn-login-password">Password</label>
+            <input
+              id="tn-login-password"
+              type="password"
+              name="password"
+              required
+              minlength="6"
+              placeholder="••••••••"
+            />
+          </div>
+          <div class="tn-auth-row">
+            <a class="tn-auth-link" id="tn-forgot-password">Forgot password?</a>
+            <a class="tn-auth-link" id="tn-switch-to-signup">New here? Create account</a>
+          </div>
+          <button type="submit" class="tn-auth-submit">Enter dashboard</button>
+        </form>
+
+        <!-- Signup form -->
+        <form id="tn-signup-form" class="tn-auth-form" autocomplete="on">
+          <div class="tn-field">
+            <label for="tn-signup-name">Full name</label>
+            <input
+              id="tn-signup-name"
+              type="text"
+              name="name"
+              required
+              placeholder="Crew lead, climber, or operator"
+            />
+          </div>
+          <div class="tn-field">
+            <label for="tn-signup-email">Email</label>
+            <input id="tn-signup-email" type="email" name="email" required placeholder="you@crew.com" />
+          </div>
+          <div class="tn-field">
+            <label for="tn-signup-password">Password</label>
+            <input
+              id="tn-signup-password"
+              type="password"
+              name="password"
+              required
+              minlength="6"
+              placeholder="Minimum 6 characters"
+            />
+          </div>
+          <div class="tn-field">
+            <label for="tn-signup-confirm">Confirm password</label>
+            <input
+              id="tn-signup-confirm"
+              type="password"
+              name="confirm"
+              required
+              minlength="6"
+              placeholder="Repeat your password"
+            />
+            <small>We’ll verify you once and then drop you straight into the dashboard.</small>
+          </div>
+          <div class="tn-auth-row">
+            <span></span>
+            <a class="tn-auth-link" id="tn-switch-to-login">Already have an account? Log in</a>
+          </div>
+          <button type="submit" class="tn-auth-submit">Create account</button>
+        </form>
+
+        <div class="tn-auth-footer">
+          <div class="tn-auth-status" id="tn-auth-status"></div>
+          <div>First screen after verification: <span>Dashboard</span></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="tn-footer">
+      <div>TimberNova • Field Intelligence Platform • v0.1</div>
+      <div class="tn-footer-links">
+        <span>Docs</span>
+        <span>Release notes</span>
+        <span>Support</span>
       </div>
-    </div>
+    </footer>
   </div>
 
-  <!-- Tree Name -->
-  <div id="tree-name"></div>
-  <img id="tree-image" />
+  <script>
+    // Minimal cinematic leaves
+    (function spawnLeaves() {
+      const count = 10;
+      for (let i = 0; i < count; i++) {
+        const leaf = document.createElement("div");
+        leaf.className = "tn-leaf";
+        const duration = 18 + Math.random() * 16;
+        const delay = -Math.random() * duration;
+        const xStart = Math.random() * 100 + "%";
+        const xEnd = Math.random() * 100 + "%";
+        leaf.style.setProperty("--x-start", xStart);
+        leaf.style.setProperty("--x-end", xEnd);
+        leaf.style.animationDuration = duration + "s";
+        leaf.style.animationDelay = delay + "s";
+        document.body.appendChild(leaf);
+      }
+    })();
 
-  <!-- Leaflet -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    // Auth UI toggle
+    const toggleLoginBtn = document.getElementById("tn-toggle-login");
+    const toggleSignupBtn = document.getElementById("tn-toggle-signup");
+    const loginForm = document.getElementById("tn-login-form");
+    const signupForm = document.getElementById("tn-signup-form");
+    const statusEl = document.getElementById("tn-auth-status");
 
-  <!-- TimberNova Map 2 -->
-  <script type="module">
-    import { createTimberNovaMap2 } from './modules/timbernova-map2/timberNovaMap2.js';
-
-    const tm = createTimberNovaMap2({ containerId: 'map' });
-
-    // UI Elements
-    const btnLocation = document.getElementById('btn-location');
-    const btnGoAddress = document.getElementById('btn-go-address');
-    const inputAddress = document.getElementById('input-address');
-    const inputRadius = document.getElementById('input-radius');
-    const btnRadius = document.getElementById('btn-radius');
-    const btnLumberjack = document.getElementById('btn-lumberjack');
-    const lumberjackOutput = document.getElementById('lumberjack-output');
-    const btnWeather = document.getElementById('btn-weather');
-    const weatherOutput = document.getElementById('weather-output');
-    const btnGoogle = document.getElementById('btn-google');
-    const btnApple = document.getElementById('btn-apple');
-    const treeSearch = document.getElementById('tree-search');
-    const btnTreeSearch = document.getElementById('btn-tree-search');
-    const treeInfo = document.getElementById('tree-info');
-
-    let lastJobCenter = null;
-    let lastUserLoc = null;
-
-    // --- Tree Species Lookup ---
-    async function lookupTree(query) {
-      const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`;
-      const res = await fetch(url);
-      if (!res.ok) return null;
-      return await res.json();
+    function showLogin() {
+      toggleLoginBtn.classList.add("tn-active");
+      toggleSignupBtn.classList.remove("tn-active");
+      loginForm.classList.add("tn-visible");
+      signupForm.classList.remove("tn-visible");
+      statusEl.textContent = "";
+      statusEl.className = "tn-auth-status";
     }
 
-    btnTreeSearch.onclick = async () => {
-      const q = treeSearch.value.trim();
-      if (!q) return;
-      treeInfo.textContent = "Searching...";
-      const data = await lookupTree(q);
-      if (!data) {
-        treeInfo.textContent = "No information found.";
-        return;
-      }
-      treeInfo.textContent = `${data.title}\n\n${data.extract}`;
-    };
-
-    // --- Map Controls ---
-    btnLocation.onclick = async () => {
-      await tm.useMyLocation();
-      navigator.geolocation.getCurrentPosition(pos => {
-        lastUserLoc = [pos.coords.latitude, pos.coords.longitude];
-      });
-    };
-
-    btnGoAddress.onclick = async () => {
-      const addr = inputAddress.value.trim();
-      if (!addr) return;
-      const result = await tm.goToAddress(addr);
-      if (result) lastJobCenter = [result.lat, result.lon];
-    };
-
-    btnRadius.onclick = () => {
-      const ft = parseFloat(inputRadius.value || '100');
-      tm.setRadiusMeters(ft * 0.3048);
-    };
-
-    btnLumberjack.onclick = async () => {
-      const addr = inputAddress.value.trim();
-      if (!addr) return;
-      lumberjackOutput.textContent = "Loading...";
-      const intel = await tm.getLumberjackIntelForAddress(addr);
-      if (!intel) {
-        lumberjackOutput.textContent = "No data.";
-        return;
-      }
-      lastJobCenter = [intel.center.lat, intel.center.lon];
-      lumberjackOutput.textContent = JSON.stringify(intel, null, 2);
-    };
-
-    btnWeather.onclick = async () => {
-      weatherOutput.textContent = "Loading...";
-      const w = await tm.getWeatherAtCenter();
-      weatherOutput.textContent = JSON.stringify(w, null, 2);
-    };
-
-    btnGoogle.onclick = () => {
-      if (!lastUserLoc || !lastJobCenter) return alert("Need your location + job address.");
-      tm.openDirectionsToAddressInGoogleMaps(lastUserLoc, lastJobCenter);
-    };
-
-    btnApple.onclick = () => {
-      if (!lastUserLoc || !lastJobCenter) return alert("Need your location + job address.");
-      tm.openDirectionsToAddressInAppleMaps(lastUserLoc, lastJobCenter);
-    };
-
-    // --- Falling Leaves ---
-    function spawnLeaf() {
-      const leaf = document.createElement("div");
-      leaf.className = "leaf";
-      leaf.style.left = Math.random() * 100 + "vw";
-      leaf.style.animationDuration = 4 + Math.random() * 6 + "s";
-      leaf.style.opacity = 0.5 + Math.random() * 0.5;
-      document.body.appendChild(leaf);
-      setTimeout(() => leaf.remove(), 10000);
+    function showSignup() {
+      toggleSignupBtn.classList.add("tn-active");
+      toggleLoginBtn.classList.remove("tn-active");
+      signupForm.classList.add("tn-visible");
+      loginForm.classList.remove("tn-visible");
+      statusEl.textContent = "";
+      statusEl.className = "tn-auth-status";
     }
-    setInterval(spawnLeaf, 400);
 
-    // --- Random Tree Image + Name ---
-    const trees = [
-      { name: "White Oak", img: "./assets/trees/white-oak.png" },
-      { name: "Red Maple", img: "./assets/trees/red-maple.png" },
-      { name: "Loblolly Pine", img: "./assets/trees/loblolly.png" },
-      { name: "Sweetgum", img: "./assets/trees/sweetgum.png" },
-      { name: "Sycamore", img: "./assets/trees/sycamore.png" }
-    ];
+    toggleLoginBtn.addEventListener("click", showLogin);
+    toggleSignupBtn.addEventListener("click", showSignup);
 
-    const chosen = trees[Math.floor(Math.random() * trees.length)];
-    document.getElementById("tree-name").textContent = chosen.name;
-    document.getElementById("tree-image").src = chosen.img;
+    document.getElementById("tn-switch-to-signup").addEventListener("click", (e) => {
+      e.preventDefault();
+      showSignup();
+    });
+
+    document.getElementById("tn-switch-to-login").addEventListener("click", (e) => {
+      e.preventDefault();
+      showLogin();
+    });
+
+    document.getElementById("tn-header-login-link").addEventListener("click", showLogin);
+
+    // Stubbed auth logic — replace with real backend/Firebase later
+    function fakeAuthDelay() {
+      return new Promise((resolve) => setTimeout(resolve, 700));
+    }
+
+    async function handleLogin(event) {
+      event.preventDefault();
+      statusEl.textContent = "Verifying your access…";
+      statusEl.className = "tn-auth-status";
+      const email = document.getElementById("tn-login-email").value.trim();
+      const password = document.getElementById("tn-login-password").value.trim();
+
+      if (!email || !password) {
+        statusEl.textContent = "Enter your email and password to continue.";
+        statusEl.className = "tn-auth-status tn-error";
+        return;
+      }
+
+      await fakeAuthDelay();
+
+      // TODO: replace with real auth check
+      // For now, treat any non-empty credentials as valid
+      statusEl.textContent = "Access granted. Redirecting to dashboard…";
+      statusEl.className = "tn-auth-status tn-success";
+
+      setTimeout(() => {
+        // You can also set a token in localStorage here
+        // localStorage.setItem("timberNovaUser", JSON.stringify({ email }));
+        window.location.href = "dashboard.html";
+      }, 600);
+    }
+
+    async function handleSignup(event) {
+      event.preventDefault();
+      statusEl.textContent = "Creating your TimberNova account…";
+      statusEl.className = "tn-auth-status";
+
+      const name = document.getElementById("tn-signup-name").value.trim();
+      const email = document.getElementById("tn-signup-email").value.trim();
+      const password = document.getElementById("tn-signup-password").value.trim();
+      const confirm = document.getElementById("tn-signup-confirm").value.trim();
+
+      if (!name || !email || !password || !confirm) {
+        statusEl.textContent = "Fill out all fields to create your account.";
+        statusEl.className = "tn-auth-status tn-error";
+        return;
+      }
+
+      if (password !== confirm) {
+        statusEl.textContent = "Passwords don’t match. Try again.";
+        statusEl.className = "tn-auth-status tn-error";
+        return;
+      }
+
+      await fakeAuthDelay();
+
+      // TODO: replace with real signup logic
+      statusEl.textContent = "Account created. Dropping you into the dashboard…";
+      statusEl.className = "tn-auth-status tn-success";
+
+      setTimeout(() => {
+        // localStorage.setItem("timberNovaUser", JSON.stringify({ name, email }));
+        window.location.href = "dashboard.html";
+      }, 700);
+    }
+
+    loginForm.addEventListener("submit", handleLogin);
+    signupForm.addEventListener("submit", handleSignup);
+
+    // Forgot password stub
+    document.getElementById("tn-forgot-password").addEventListener("click", (e) => {
+      e.preventDefault();
+      statusEl.textContent = "Password reset coming soon. For now, contact your crew lead.";
+      statusEl.className = "tn-auth-status";
+    });
   </script>
 </body>
 </html>
