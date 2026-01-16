@@ -5,190 +5,45 @@
   <title>TimberNova Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="styles.css" />
-
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
   <style>
     :root {
-      --bg: #05070b;
-      --panel: rgba(15, 23, 42, 0.85);
+      --bg: #020617;
+      --panel: rgba(15, 23, 42, 0.9);
       --border: rgba(148, 163, 184, 0.25);
       --accent: #4ade80;
-      --accent-soft: rgba(74, 222, 128, 0.15);
       --text-main: #f9fafb;
       --text-soft: #9ca3af;
       --radius: 16px;
-      --glow: 0 0 40px rgba(74, 222, 128, 0.35);
     }
-
-    body {
-      margin: 0;
-      background: #020617;
-      color: var(--text-main);
-      font-family: system-ui, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    header {
-      padding: 18px 28px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-      background: rgba(2, 6, 23, 0.8);
-      backdrop-filter: blur(8px);
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .logo-mark {
-      width: 34px;
-      height: 34px;
-      border-radius: 12px;
-      background: radial-gradient(circle at 30% 0%, #bbf7d0, #22c55e 40%, #052e16 100%);
-      box-shadow: 0 0 20px rgba(34, 197, 94, 0.7);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      color: #022c22;
-    }
-
-    nav {
-      display: flex;
-      gap: 18px;
-    }
-
-    nav a {
-      color: var(--text-soft);
-      text-decoration: none;
-      font-size: 14px;
-      padding: 6px 10px;
-      border-radius: 10px;
-      transition: 0.2s;
-    }
-
-    nav a:hover {
-      background: rgba(255, 255, 255, 0.05);
-      color: #fff;
-    }
-
-    main {
-      padding: 28px;
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 28px;
-    }
-
-    @media (max-width: 900px) {
-      main {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .panel {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      backdrop-filter: blur(6px);
-    }
-
-    .panel h2 {
-      margin: 0 0 12px;
-      font-size: 18px;
-      font-weight: 600;
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-    }
-
-    .stat {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--border);
-      padding: 16px;
-      border-radius: 14px;
-      text-align: center;
-    }
-
-    .stat strong {
-      display: block;
-      font-size: 22px;
-      margin-bottom: 4px;
-      color: var(--accent);
-    }
-
-    .map-preview {
-      height: 220px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, #0f172a, #1e293b);
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-soft);
-      font-size: 14px;
-    }
-
-    .tree-card {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .tree-name {
-      font-family: "Georgia", serif;
-      font-size: 22px;
-      color: var(--accent);
-    }
-
-    .crew-list div {
-      padding: 8px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 14px;
-      color: var(--text-soft);
-    }
-
-    .job-list div {
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: 14px;
-    }
-
-    footer {
-      padding: 14px 28px;
-      font-size: 12px;
-      color: var(--text-soft);
-      border-top: 1px solid var(--border);
-      margin-top: auto;
-      background: rgba(2, 6, 23, 0.8);
-      backdrop-filter: blur(8px);
-    }
+    body { margin:0; background:var(--bg); color:var(--text-main); font-family:system-ui,sans-serif; min-height:100vh; display:flex; flex-direction:column; }
+    header, footer { padding:16px 24px; background:rgba(2,6,23,0.9); border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+    footer { border-top:1px solid var(--border); border-bottom:none; margin-top:auto; }
+    nav a { color:var(--text-soft); text-decoration:none; margin-left:12px; font-size:14px; padding:6px 10px; border-radius:999px; }
+    nav a:hover { background:rgba(148,163,184,0.2); color:#e5e7eb; }
+    main { padding:24px; display:grid; grid-template-columns:2fr 1fr; gap:24px; }
+    @media (max-width:900px){ main{grid-template-columns:1fr;} }
+    .panel { background:var(--panel); border-radius:var(--radius); border:1px solid var(--border); padding:16px; }
+    .panel h2 { margin:0 0 12px; font-size:18px; }
+    .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+    .stat { background:rgba(15,23,42,1); border-radius:14px; border:1px solid var(--border); padding:12px; text-align:center; font-size:13px; }
+    .stat strong { display:block; font-size:20px; color:var(--accent); margin-bottom:4px; }
+    #dashboard-map { height:220px; border-radius:14px; border:1px solid var(--border); margin-top:4px; }
+    .tree-name { font-family:"Georgia",serif; font-size:22px; color:var(--accent); margin-bottom:6px; }
+    .job-list div { padding:8px 0; border-bottom:1px solid var(--border); font-size:14px; }
+    .job-list div:last-child { border-bottom:none; }
+    .weather-line { font-size:13px; color:var(--text-soft); margin-top:6px; }
   </style>
 </head>
-
 <body>
-
-  <!-- HEADER -->
   <header>
-    <div class="logo">
-      <div class="logo-mark">T</div>
-      <div>
-        <div style="font-size:14px;font-weight:600;">TimberNova</div>
-        <div style="font-size:11px;color:var(--text-soft);">Dashboard</div>
-      </div>
-    </div>
-
+    <div>TimberNova • Dashboard</div>
     <nav>
       <a href="dashboard.html">Dashboard</a>
       <a href="contracts.html">Contracts</a>
@@ -201,89 +56,88 @@
     </nav>
   </header>
 
-  <!-- MAIN -->
   <main>
-
-    <!-- LEFT SIDE -->
-    <div class="panel">
-      <h2>Today’s Overview</h2>
-
+    <section class="panel">
+      <h2>Today’s overview</h2>
       <div class="stats-grid">
-        <div class="stat">
-          <strong>4</strong>
-          Jobs Today
-        </div>
-        <div class="stat">
-          <strong>2</strong>
-          Crew Online
-        </div>
-        <div class="stat">
-          <strong>7</strong>
-          Open Contracts
-        </div>
+        <div class="stat"><strong>4</strong>Jobs today</div>
+        <div class="stat"><strong>2</strong>Crew online</div>
+        <div class="stat"><strong>7</strong>Open contracts</div>
       </div>
 
-      <h2 style="margin-top:24px;">Map Preview</h2>
-      <div class="map-preview">
-        Mini-map coming from timberNovaMap.js
-      </div>
+      <h2 style="margin-top:20px;">Map & weather</h2>
+      <div id="dashboard-map"></div>
+      <div id="dashboard-weather" class="weather-line">Weather at map center: loading…</div>
 
-      <h2 style="margin-top:24px;">Upcoming Jobs</h2>
+      <h2 style="margin-top:20px;">Upcoming jobs</h2>
       <div class="job-list">
         <div>• Oak removal — 9:00 AM</div>
         <div>• Storm cleanup — 11:30 AM</div>
         <div>• Pine trimming — 2:00 PM</div>
       </div>
-    </div>
+    </section>
 
-    <!-- RIGHT SIDE -->
-    <div class="panel">
-      <h2>Tree of the Day</h2>
-      <div class="tree-card">
-        <div class="tree-name" id="treeName">Loading…</div>
-        <div id="treeDesc" style="font-size:14px;color:var(--text-soft);">
-          Fetching species info…
-        </div>
+    <section class="panel">
+      <h2>Tree of the day</h2>
+      <div class="tree-name" id="treeName">Loading…</div>
+      <div id="treeDesc" style="font-size:14px;color:var(--text-soft);">Fetching species info…</div>
+
+      <h2 style="margin-top:24px;">Crew online</h2>
+      <div style="font-size:14px;color:var(--text-soft);">
+        • Marcus — Climber<br />
+        • Tasha — Operator
       </div>
-
-      <h2 style="margin-top:28px;">Crew Online</h2>
-      <div class="crew-list">
-        <div>• Marcus — Climber</div>
-        <div>• Tasha — Operator</div>
-      </div>
-    </div>
-
+    </section>
   </main>
 
-  <footer>
-    TimberNova • Field Intelligence Platform • v0.1
-  </footer>
+  <footer>TimberNova • Dashboard</footer>
 
-  <script>
-    // AUTH CHECK
-    const user = localStorage.getItem("timberNovaUser");
-    if (!user) {
-      window.location.href = "index.html";
-    }
+  <!-- Leaflet JS -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <!-- TimberNova map engine -->
+  <script type="module">
+    import { createTimberNovaMap2 } from "./modules/timbernova-map2/timberNovaMap2.js";
 
-    // LOGOUT
-    document.getElementById("logout").addEventListener("click", () => {
+    if (!localStorage.getItem("timberNovaUser")) window.location.href = "index.html";
+    document.getElementById("logout").onclick = () => {
       localStorage.removeItem("timberNovaUser");
       window.location.href = "index.html";
-    });
+    };
 
-    // TREE OF THE DAY (simple randomizer)
+    // Tree of the day
     const trees = [
-      { name: "Quercus alba", desc: "The white oak — strong, long-lived, and iconic." },
-      { name: "Pinus taeda", desc: "Loblolly pine — fast-growing and widely used." },
-      { name: "Acer rubrum", desc: "Red maple — vibrant foliage and adaptable." },
-      { name: "Liquidambar styraciflua", desc: "Sweetgum — star-shaped leaves and spiked fruit." }
+      { name: "Quercus alba", desc: "White oak — strong, long-lived, iconic canopy." },
+      { name: "Pinus taeda", desc: "Loblolly pine — fast-growing, common in the Southeast." },
+      { name: "Acer rubrum", desc: "Red maple — adaptable with vibrant fall color." },
+      { name: "Liquidambar styraciflua", desc: "Sweetgum — star-shaped leaves, dense wood." }
     ];
-
     const pick = trees[Math.floor(Math.random() * trees.length)];
     document.getElementById("treeName").textContent = pick.name;
     document.getElementById("treeDesc").textContent = pick.desc;
-  </script>
 
+    // Map + weather
+    const mapApi = createTimberNovaMap2({
+      containerId: "dashboard-map",
+      defaultZoom: 12
+    });
+
+    (async () => {
+      const weatherEl = document.getElementById("dashboard-weather");
+      try {
+        const w = await mapApi.getWeatherAtCenter();
+        if (!w) {
+          weatherEl.textContent = "Weather at map center: unavailable.";
+          return;
+        }
+        weatherEl.textContent = `Weather at map center: ${w.temperature}°C, wind ${w.windspeed} km/h, ${w.weathercode ?? ""}`;
+      } catch (e) {
+        weatherEl.textContent = "Weather at map center: error fetching.";
+      }
+    })();
+  </script>
 </body>
 </html>
