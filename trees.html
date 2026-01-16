@@ -2,34 +2,52 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>TimberNova — Trees</title>
+  <title>TimberNova — Tree & Disease Encyclopedia</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="styles.css" />
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    crossorigin=""
-  />
   <style>
     body { margin:0; background:#020617; color:#f9fafb; font-family:system-ui,sans-serif; display:flex; flex-direction:column; min-height:100vh; }
     header, footer { padding:16px 24px; background:rgba(2,6,23,0.9); border-bottom:1px solid rgba(148,163,184,0.3); display:flex; justify-content:space-between; align-items:center; }
     footer { border-top:1px solid rgba(148,163,184,0.3); border-bottom:none; margin-top:auto; }
     nav a { color:#9ca3af; text-decoration:none; margin-left:12px; font-size:14px; padding:6px 10px; border-radius:999px; }
     nav a:hover { background:rgba(148,163,184,0.2); color:#e5e7eb; }
-    main { padding:24px; display:grid; grid-template-columns:1.4fr 1fr; gap:24px; max-width:1100px; margin:0 auto; }
+
+    main { padding:24px; max-width:1100px; margin:0 auto; display:grid; grid-template-columns:1.4fr 1fr; gap:24px; }
     @media (max-width:900px){ main{grid-template-columns:1fr;} }
+
     .panel { background:rgba(15,23,42,0.9); border-radius:16px; border:1px solid rgba(148,163,184,0.3); padding:16px; }
-    #trees-map { height:260px; border-radius:14px; border:1px solid rgba(148,163,184,0.3); }
-    .tree-name { font-family:"Georgia",serif; font-size:22px; color:#4ade80; margin-bottom:6px; }
-    .tree-search input { width:100%; border-radius:10px; border:1px solid rgba(148,163,184,0.6); background:rgba(15,23,42,0.9); color:#e5e7eb; padding:8px 10px; font-size:13px; margin-top:6px; }
-    .tree-search button { margin-top:8px; border:none; border-radius:10px; padding:8px 14px; font-size:13px; background:linear-gradient(120deg,#22c55e,#4ade80); color:#022c22; cursor:pointer; }
-    .intel { font-size:13px; color:#9ca3af; margin-top:10px; line-height:1.5; }
+
+    h1 { font-size:22px; margin-bottom:6px; }
+    .sub { font-size:13px; color:#9ca3af; margin-bottom:16px; }
+
+    .search-bar { margin-bottom:12px; }
+    .search-bar input { width:100%; border-radius:10px; border:1px solid rgba(148,163,184,0.6); background:rgba(15,23,42,0.9); color:#e5e7eb; padding:8px 10px; font-size:13px; }
+    .filters { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; margin-bottom:8px; }
+    .filter-btn { border-radius:999px; padding:6px 12px; font-size:12px; cursor:pointer; border:1px solid rgba(148,163,184,0.5); background:rgba(15,23,42,1); color:#e5e7eb; }
+    .filter-btn.active { background:linear-gradient(120deg,#22c55e,#4ade80); color:#022c22; border-color:#22c55e; }
+
+    .results-list { max-height:420px; overflow:auto; font-size:13px; }
+    .result-item { padding:8px 10px; border-radius:10px; border:1px solid rgba(148,163,184,0.25); margin-bottom:8px; cursor:pointer; background:rgba(15,23,42,0.9); }
+    .result-item:hover { border-color:#4ade80; }
+    .result-title { font-weight:600; }
+    .tag { display:inline-block; font-size:11px; padding:2px 6px; border-radius:999px; border:1px solid rgba(148,163,184,0.5); margin-left:4px; }
+    .tag-risk { border-color:#f97316; color:#fed7aa; }
+    .tag-disease { border-color:#f97316; color:#fed7aa; }
+    .tag-tree { border-color:#4ade80; color:#bbf7d0; }
+    .tag-plant { border-color:#38bdf8; color:#e0f2fe; }
+
+    .detail-title { font-size:18px; margin-bottom:4px; }
+    .detail-sub { font-size:13px; color:#9ca3af; margin-bottom:10px; }
+    .detail-section-title { font-size:13px; font-weight:600; margin-top:10px; margin-bottom:4px; }
+    .detail-body { font-size:13px; color:#e5e7eb; line-height:1.5; }
+
+    .pill-btn { border:none; border-radius:999px; padding:6px 12px; font-size:12px; cursor:pointer; background:linear-gradient(120deg,#22c55e,#4ade80); color:#022c22; }
+    .pill-btn-ghost { border-radius:999px; padding:6px 12px; font-size:12px; cursor:pointer; background:rgba(15,23,42,1); color:#e5e7eb; border:1px solid rgba(148,163,184,0.5); margin-left:8px; }
   </style>
 </head>
 <body>
   <header>
-    <div>TimberNova • Trees</div>
+    <div>TimberNova • Trees & Diseases</div>
     <nav>
       <a href="dashboard.html">Dashboard</a>
       <a href="contracts.html">Contracts</a>
@@ -43,76 +61,296 @@
   </header>
 
   <main>
+    <!-- LEFT: Search + results -->
     <section class="panel">
-      <h2>Tree map</h2>
-      <div id="trees-map"></div>
+      <h1>Tree • Plant • Disease index</h1>
+      <div class="sub">
+        Search species, ivy, pests, and diseases. This is your field encyclopedia for diagnosis and protocol.
+      </div>
+
+      <div class="search-bar">
+        <input id="searchInput" placeholder="Search by common name, Latin name, symptom, or protocol…" />
+      </div>
+
+      <div class="filters">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="tree">Trees</button>
+        <button class="filter-btn" data-filter="plant">Plants & vines</button>
+        <button class="filter-btn" data-filter="disease">Diseases & pests</button>
+      </div>
+
+      <div id="resultsList" class="results-list">
+        <!-- Populated by JS -->
+      </div>
     </section>
 
+    <!-- RIGHT: Detail view -->
     <section class="panel">
-      <h2>Address intel</h2>
-      <div class="tree-search">
-        <label style="font-size:12px;color:#9ca3af;">Job address</label>
-        <input id="addressInput" placeholder="123 Oak St, City…" />
-        <button id="addressIntelBtn">Get lumberjack intel</button>
-      </div>
-      <div class="intel" id="intelOutput">
-        Enter an address to see nearby powerlines, structures, and stores.
+      <h2>Detail</h2>
+      <div id="detailPane">
+        <div class="detail-body" style="color:#9ca3af;">
+          Search on the left to see full details: identification, risk, and recommended protocols.
+        </div>
       </div>
     </section>
   </main>
 
-  <footer>TimberNova • Trees</footer>
+  <footer>TimberNova • Trees & Diseases</footer>
 
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""
-  ></script>
-  <script type="module">
-    import { createTimberNovaMap2 } from "./modules/timbernova-map2/timberNovaMap2.js";
-
+  <script>
     if (!localStorage.getItem("timberNovaUser")) window.location.href = "index.html";
     document.getElementById("logout").onclick = () => {
       localStorage.removeItem("timberNovaUser");
       window.location.href = "index.html";
     };
 
-    const mapApi = createTimberNovaMap2({
-      containerId: "trees-map",
-      defaultZoom: 14
+    // --- LOCAL ENCYCLOPEDIA INDEX ---
+    // You can extend this array anytime with more entries.
+    const encyclopedia = [
+      {
+        id: "tree_white_oak",
+        type: "tree",
+        commonName: "White oak",
+        latinName: "Quercus alba",
+        region: "Eastern North America, common in the Southeast",
+        form: "Large canopy hardwood",
+        leaf: "Rounded lobes, pale underside, classic oak leaf",
+        notes: "Strong, long-lived, often near homes and driveways. High value, often pruned rather than removed.",
+        risks: "Large limbs over structures, decay in old pruning wounds, root disturbance from construction.",
+        protocols: "Full 360° inspection, look for included bark, cavities, fungal conks. Recommend pruning, cabling, or removal based on target and defect severity."
+      },
+      {
+        id: "tree_water_oak",
+        type: "tree",
+        commonName: "Water oak",
+        latinName: "Quercus nigra",
+        region: "Southeastern US, very common in urban lots",
+        form: "Medium to large, often with poor structure",
+        leaf: "Small, spatula-shaped leaves, semi-evergreen in warm climates",
+        notes: "Fast-growing, often short-lived. Frequently has decay, deadwood, and limb drop near houses.",
+        risks: "Limb failure in storms, trunk decay, root issues in saturated soils.",
+        protocols: "Check for deadwood, cavities, fungal fruiting bodies. Discuss risk tolerance with client; often candidates for removal or heavy reduction."
+      },
+      {
+        id: "tree_loblolly_pine",
+        type: "tree",
+        commonName: "Loblolly pine",
+        latinName: "Pinus taeda",
+        region: "Southeast US, very common",
+        form: "Tall, straight conifer, often in groups",
+        leaf: "3 needles per fascicle, medium length, flexible",
+        notes: "Common around homes, often near powerlines. Root plate and soil saturation are key risk factors.",
+        risks: "Windthrow in saturated soils, root rot, lightning strikes.",
+        protocols: "Check lean, root flare, soil heaving, crown dieback. Evaluate stand density; thinning or removal near targets may be recommended."
+      },
+      {
+        id: "tree_red_maple",
+        type: "tree",
+        commonName: "Red maple",
+        latinName: "Acer rubrum",
+        region: "Eastern North America, widely planted",
+        form: "Medium canopy, often multi-stemmed in yards",
+        leaf: "3–5 lobes, serrated edges, red fall color",
+        notes: "Adaptable, often planted near driveways and lawns. Surface roots can lift pavement.",
+        risks: "Included bark at co-dominant stems, limb failure in storms.",
+        protocols: "Inspect unions for included bark, recommend structural pruning and possible cabling for co-dominant stems."
+      },
+      {
+        id: "plant_english_ivy",
+        type: "plant",
+        commonName: "English ivy",
+        latinName: "Hedera helix",
+        region: "Invasive in many temperate regions",
+        form: "Climbing vine, evergreen",
+        leaf: "Lobed, dark green, often with pale veins",
+        notes: "Climbs tree trunks, adds weight and hides defects. Can girdle stems and trap moisture.",
+        risks: "Hidden decay, increased wind sail, difficulty inspecting bark.",
+        protocols: "Cut ivy at base all around trunk, peel back only what is safe. Do not rip off high ivy; let it die in place. Educate client on long-term management."
+      },
+      {
+        id: "plant_poison_ivy",
+        type: "plant",
+        commonName: "Poison ivy",
+        latinName: "Toxicodendron radicans",
+        region: "Widespread in North America",
+        form: "Vine or small shrub",
+        leaf: "Leaves of three, variable shape, often glossy",
+        notes: "Major skin irritant. Can climb trees and mix with brush piles.",
+        risks: "Severe dermatitis for crew, contamination of ropes and gear.",
+        protocols: "Identify before cutting. Use gloves and long sleeves. Avoid burning. Wash exposed gear and skin with appropriate cleaners."
+      },
+      {
+        id: "disease_oak_wilt",
+        type: "disease",
+        commonName: "Oak wilt",
+        latinName: "Bretziella fagacearum (fungal disease)",
+        region: "Certain regions of North America (check local extension)",
+        host: "Primarily red oaks, some white oaks",
+        symptoms: "Sudden wilting, leaf bronzing, rapid decline, vascular streaking.",
+        causes: "Fungal pathogen spread by root grafts and sap-feeding beetles.",
+        protocols: "Avoid pruning oaks in high-risk seasons. Sanitize tools. Consult local regulations and extension services. Removal and root trenching may be required."
+      },
+      {
+        id: "disease_needle_blight",
+        type: "disease",
+        commonName: "Needle blight (general)",
+        latinName: "Various fungal pathogens",
+        region: "Common on pines and spruces in humid regions",
+        host: "Pines, spruces, other conifers",
+        symptoms: "Browning needles from inside out, premature needle drop, thin crown.",
+        causes: "Fungal infection favored by poor airflow and wet foliage.",
+        protocols: "Improve airflow, remove heavily infected branches, avoid overhead irrigation. Refer to licensed applicator for fungicide options if appropriate."
+      },
+      {
+        id: "pest_emerald_ash_borer",
+        type: "disease",
+        commonName: "Emerald ash borer",
+        latinName: "Agrilus planipennis",
+        region: "Many parts of North America (spreading)",
+        host: "Ash trees (Fraxinus spp.)",
+        symptoms: "Crown dieback, D-shaped exit holes, bark splitting, epicormic shoots.",
+        causes: "Invasive beetle larvae feeding under bark.",
+        protocols: "High mortality once infested. Consider preemptive treatment or removal. Follow local regulations for wood disposal."
+      },
+      {
+        id: "disease_root_rot",
+        type: "disease",
+        commonName: "Root rot (general)",
+        latinName: "Various fungi (e.g., Armillaria)",
+        region: "Widespread, especially in poorly drained soils",
+        host: "Many tree species",
+        symptoms: "Thinning crown, mushrooms at base, resin exudation, poor vigor, root plate failure.",
+        causes: "Fungal decay of roots and butt, often in stressed trees.",
+        protocols: "Probe root flare, look for mushrooms and decay. Discuss elevated failure risk with client. Removal often recommended near targets."
+      }
+    ];
+
+    const searchInput = document.getElementById("searchInput");
+    const resultsList = document.getElementById("resultsList");
+    const detailPane = document.getElementById("detailPane");
+    const filterButtons = Array.from(document.querySelectorAll(".filter-btn"));
+
+    let currentFilter = "all";
+
+    function matchesFilter(item) {
+      if (currentFilter === "all") return true;
+      if (currentFilter === "tree") return item.type === "tree";
+      if (currentFilter === "plant") return item.type === "plant";
+      if (currentFilter === "disease") return item.type === "disease";
+      return true;
+    }
+
+    function matchesQuery(item, q) {
+      if (!q) return true;
+      const haystack = [
+        item.commonName,
+        item.latinName,
+        item.region,
+        item.form,
+        item.leaf,
+        item.notes,
+        item.risks,
+        item.protocols,
+        item.host,
+        item.symptoms,
+        item.causes
+      ].filter(Boolean).join(" ").toLowerCase();
+      return haystack.includes(q.toLowerCase());
+    }
+
+    function renderResults() {
+      const q = searchInput.value.trim();
+      const filtered = encyclopedia.filter(item => matchesFilter(item) && matchesQuery(item, q));
+
+      if (!filtered.length) {
+        resultsList.innerHTML = `<div style="font-size:13px;color:#9ca3af;">No matches. Try a different term (e.g. “ivy”, “needle blight”, “oak”).</div>`;
+        return;
+      }
+
+      resultsList.innerHTML = "";
+      filtered.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "result-item";
+
+        let typeTagClass = item.type === "tree" ? "tag tag-tree"
+                          : item.type === "plant" ? "tag tag-plant"
+                          : "tag tag-disease";
+
+        const riskTag = item.risks ? `<span class="tag tag-risk">Risk</span>` : "";
+        div.innerHTML = `
+          <div class="result-title">
+            ${item.commonName}
+            <span class="${typeTagClass}">${item.type}</span>
+            ${riskTag}
+          </div>
+          <div style="font-size:12px;color:#9ca3af;">${item.latinName || ""}</div>
+          <div style="font-size:12px;color:#9ca3af;margin-top:4px;">${(item.region || item.host || "").slice(0,120)}</div>
+        `;
+        div.onclick = () => showDetail(item);
+        resultsList.appendChild(div);
+      });
+    }
+
+    function showDetail(item) {
+      const isDisease = item.type === "disease";
+      const isPlant = item.type === "plant";
+      const isTree = item.type === "tree";
+
+      const metaLine = [
+        item.latinName ? item.latinName : null,
+        item.region ? `Region: ${item.region}` : null,
+        item.host ? `Host: ${item.host}` : null
+      ].filter(Boolean).join(" • ");
+
+      detailPane.innerHTML = `
+        <div class="detail-title">${item.commonName}</div>
+        <div class="detail-sub">${metaLine}</div>
+
+        ${item.form ? `<div class="detail-section-title">Form</div><div class="detail-body">${item.form}</div>` : ""}
+
+        ${item.leaf ? `<div class="detail-section-title">Leaves / ID</div><div class="detail-body">${item.leaf}</div>` : ""}
+
+        ${item.notes ? `<div class="detail-section-title">Notes</div><div class="detail-body">${item.notes}</div>` : ""}
+
+        ${item.symptoms ? `<div class="detail-section-title">Symptoms</div><div class="detail-body">${item.symptoms}</div>` : ""}
+
+        ${item.causes ? `<div class="detail-section-title">Causes</div><div class="detail-body">${item.causes}</div>` : ""}
+
+        ${item.risks ? `<div class="detail-section-title">Risks</div><div class="detail-body">${item.risks}</div>` : ""}
+
+        ${item.protocols ? `<div class="detail-section-title">Recommended protocols</div><div class="detail-body">${item.protocols}</div>` : ""}
+
+        <div style="margin-top:14px;">
+          <button class="pill-btn" id="detailCopyBtn">Copy summary</button>
+          <button class="pill-btn-ghost" id="detailWebSearchBtn">Search web for more</button>
+        </div>
+      `;
+
+      document.getElementById("detailCopyBtn").onclick = () => {
+        const summary = `${item.commonName} (${item.latinName || ""}) — ${item.notes || ""} ${item.symptoms || ""} ${item.risks || ""} Protocols: ${item.protocols || ""}`;
+        navigator.clipboard?.writeText(summary);
+      };
+
+      document.getElementById("detailWebSearchBtn").onclick = () => {
+        const q = `${item.commonName} ${item.latinName || ""} tree disease care`;
+        const url = `https://www.google.com/search?q=${encodeURIComponent(q)}`;
+        window.open(url, "_blank");
+      };
+    }
+
+    searchInput.addEventListener("input", renderResults);
+
+    filterButtons.forEach(btn => {
+      btn.onclick = () => {
+        filterButtons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentFilter = btn.getAttribute("data-filter");
+        renderResults();
+      };
     });
 
-    const intelOutput = document.getElementById("intelOutput");
-    document.getElementById("addressIntelBtn").onclick = async () => {
-      const addr = document.getElementById("addressInput").value.trim();
-      if (!addr) return;
-      intelOutput.textContent = "Pulling lumberjack intel…";
-
-      try {
-        const intel = await mapApi.getLumberjackIntelForAddress(addr);
-        if (!intel) {
-          intelOutput.textContent = "No intel found for that address.";
-          return;
-        }
-
-        const powerCount = intel.powerlines.length;
-        const structCount = intel.structures.length;
-        const chainsawStores = intel.stores.chainsaw.length;
-        const ropeStores = intel.stores.rope.length;
-        const treeStores = intel.stores.tree.length;
-
-        intelOutput.innerHTML = `
-          <strong style="color:#e5e7eb;">${intel.address}</strong><br/>
-          Powerlines nearby: <span style="color:#facc15;">${powerCount}</span><br/>
-          Structures nearby: <span style="color:#f97316;">${structCount}</span><br/>
-          Chainsaw stores in area: <span style="color:#4ade80;">${chainsawStores}</span><br/>
-          Rope stores in area: <span style="color:#4ade80;">${ropeStores}</span><br/>
-          Tree equipment stores: <span style="color:#4ade80;">${treeStores}</span>
-        `;
-      } catch (e) {
-        intelOutput.textContent = "Error fetching intel for that address.";
-      }
-    };
+    // Initial render
+    renderResults();
   </script>
 </body>
 </html>
