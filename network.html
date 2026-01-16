@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>TimberNova — Network</title>
+  <title>TimberNova — Stores</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="styles.css" />
   <link
@@ -20,16 +20,18 @@
     main { padding:24px; max-width:1100px; margin:0 auto; display:grid; grid-template-columns:1.4fr 1fr; gap:24px; }
     @media (max-width:900px){ main{grid-template-columns:1fr;} }
     .panel { background:rgba(15,23,42,0.9); border-radius:16px; border:1px solid rgba(148,163,184,0.3); padding:16px; }
-    #network-map { height:260px; border-radius:14px; border:1px solid rgba(148,163,184,0.3); }
-    .crew-item { padding:8px 0; border-bottom:1px solid rgba(148,163,184,0.25); font-size:14px; display:flex; justify-content:space-between; }
-    .crew-item:last-child { border-bottom:none; }
-    .status-dot { width:8px; height:8px; border-radius:999px; margin-right:6px; }
-    .map-controls button { border:none; border-radius:999px; padding:6px 12px; font-size:13px; margin-top:8px; cursor:pointer; background:linear-gradient(120deg,#22c55e,#4ade80); color:#022c22; }
+    #stores-map { height:260px; border-radius:14px; border:1px solid rgba(148,163,184,0.3); }
+    .store-item { padding:8px 0; border-bottom:1px solid rgba(148,163,184,0.25); font-size:14px; }
+    .store-item:last-child { border-bottom:none; }
+    .store-item span { display:block; }
+    .tag { font-size:11px; padding:3px 8px; border-radius:999px; border:1px solid rgba(148,163,184,0.5); display:inline-block; margin-top:4px; cursor:pointer; }
+    .search-bar input { width:100%; border-radius:10px; border:1px solid rgba(148,163,184,0.6); background:rgba(15,23,42,0.9); color:#e5e7eb; padding:8px 10px; font-size:13px; margin-top:6px; }
+    .search-bar button { margin-top:8px; border:none; border-radius:10px; padding:8px 14px; font-size:13px; background:linear-gradient(120deg,#22c55e,#4ade80); color:#022c22; cursor:pointer; }
   </style>
 </head>
 <body>
   <header>
-    <div>TimberNova • Network</div>
+    <div>TimberNova • Stores</div>
     <nav>
       <a href="dashboard.html">Dashboard</a>
       <a href="contracts.html">Contracts</a>
@@ -44,20 +46,22 @@
 
   <main>
     <section class="panel">
-      <h2>Crew map</h2>
-      <div id="network-map"></div>
-      <div class="map-controls">
-        <button id="myLocationBtn">Use my location</button>
+      <h2>Store map</h2>
+      <div class="search-bar">
+        <label style="font-size:12px;color:#9ca3af;">Job address</label>
+        <input id="storeAddress" placeholder="Use job address to find nearby stores…" />
+        <button id="storeSearchBtn">Find stores</button>
       </div>
+      <div id="stores-map" style="margin-top:10px;"></div>
     </section>
 
     <section class="panel">
-      <h2>Crew presence</h2>
-      <div id="crewList"></div>
+      <h2>Nearby stores</h2>
+      <div id="storeList" style="font-size:13px;color:#9ca3af;">Enter an address to load stores.</div>
     </section>
   </main>
 
-  <footer>TimberNova • Network</footer>
+  <footer>TimberNova • Stores</footer>
 
   <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -74,28 +78,57 @@
     };
 
     const mapApi = createTimberNovaMap2({
-      containerId: "network-map",
-      defaultZoom: 12
+      containerId: "stores-map",
+      defaultZoom: 13
     });
 
-    document.getElementById("myLocationBtn").onclick = () => {
-      mapApi.useMyLocation();
-      mapApi.setRadiusMeters(1000);
+    const storeList = document.getElementById("storeList");
+
+    document.getElementById("storeSearchBtn").onclick = async () => {
+      const addr = document.getElementById("storeAddress").value.trim();
+      if (!addr) return;
+      storeList.textContent = "Searching for nearby stores…";
+
+      try {
+        const intel = await mapApi.getLumberjackIntelForAddress(addr);
+        if (!intel) {
+          storeList.textContent = "No stores found for that area.";
+          return;
+        }
+
+        const allStores = [
+          ...intel.stores.chainsaw.map(s => ({ ...s, type: "Chainsaw" })),
+          ...intel.stores.rope.map(s => ({ ...s, type: "Rope" })),
+          ...intel.stores.tree.map(s => ({ ...s, type: "Tree equipment" }))
+        ];
+
+        if (!allStores.length) {
+          storeList.textContent = "No stores found in that radius.";
+          return;
+        }
+
+        storeList.innerHTML = "";
+        allStores.forEach(s => {
+          const div = document.createElement("div");
+          div.className = "store-item";
+          div.innerHTML = `
+            <span><strong>${s.name}</strong></span>
+            <span style="color:#9ca3af;font-size:13px;">${s.type}</span>
+            <span class="tag">Open in maps</span>
+          `;
+          div.querySelector(".tag").onclick = () => {
+            const center = intel.center;
+            mapApi.openDirectionsToAddressInGoogleMaps(
+              [center.lat, center.lon],
+              [s.lat, s.lon]
+            );
+          };
+          storeList.appendChild(div);
+        });
+      } catch (e) {
+        storeList.textContent = "Error loading stores for that address.";
+      }
     };
-
-    const crew = [
-      { name:"Marcus", role:"Climber", online:true },
-      { name:"Tasha", role:"Operator", online:true },
-      { name:"Luis", role:"Ground crew", online:false }
-    ];
-    const crewList = document.getElementById("crewList");
-    crew.forEach(c => {
-      const div = document.createElement("div");
-      div.className = "crew-item";
-      const color = c.online ? "#4ade80" : "#6b7280";
-      div.innerHTML = `<span><span class="status-dot" style="background:${color}"></span>${c.name} — ${c.role}</span><span style="font-size:12px;color:#9ca3af;">${c.online ? "Online" : "Offline"}</span>`;
-      crewList.appendChild(div);
-    });
   </script>
 </body>
 </html>
