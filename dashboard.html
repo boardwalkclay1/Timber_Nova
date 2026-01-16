@@ -27,8 +27,8 @@
     footer { border-top:1px solid var(--border); border-bottom:none; margin-top:auto; }
     nav a { color:var(--text-soft); text-decoration:none; margin-left:12px; font-size:14px; padding:6px 10px; border-radius:999px; }
     nav a:hover { background:rgba(148,163,184,0.2); color:#e5e7eb; }
-    main { padding:24px; display:grid; grid-template-columns:2fr 1fr; gap:24px; }
-    @media (max-width:900px){ main{grid-template-columns:1fr;} }
+    main { padding:24px; display:grid; grid-template-columns:2fr 1.2fr; gap:24px; }
+    @media (max-width:1000px){ main{grid-template-columns:1fr;} }
     .panel { background:var(--panel); border-radius:var(--radius); border:1px solid var(--border); padding:16px; }
     .panel h2 { margin:0 0 12px; font-size:18px; }
     .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
@@ -36,9 +36,17 @@
     .stat strong { display:block; font-size:20px; color:var(--accent); margin-bottom:4px; }
     #dashboard-map { height:220px; border-radius:14px; border:1px solid var(--border); margin-top:4px; }
     .tree-name { font-family:"Georgia",serif; font-size:22px; color:var(--accent); margin-bottom:6px; }
-    .job-list div { padding:8px 0; border-bottom:1px solid var(--border); font-size:14px; }
+    .job-list div { padding:6px 0; border-bottom:1px solid var(--border); font-size:14px; }
     .job-list div:last-child { border-bottom:none; }
     .weather-line { font-size:13px; color:var(--text-soft); margin-top:6px; }
+    .input { width:100%; border-radius:10px; border:1px solid var(--border); background:rgba(15,23,42,1); color:var(--text-main); padding:8px 10px; font-size:13px; margin-bottom:8px; }
+    .small-label { font-size:12px; color:var(--text-soft); margin-bottom:4px; }
+    .pill-btn { border:none; border-radius:999px; padding:6px 12px; font-size:12px; cursor:pointer; background:linear-gradient(120deg,#22c55e,#4ade80); color:#022c22; }
+    .pill-btn-ghost { border-radius:999px; padding:6px 12px; font-size:12px; cursor:pointer; background:rgba(15,23,42,1); color:var(--text-main); border:1px solid var(--border); }
+    .search-results { font-size:13px; color:var(--text-soft); max-height:140px; overflow:auto; }
+    .search-results div { padding:4px 0; border-bottom:1px solid rgba(148,163,184,0.2); }
+    .search-results div:last-child { border-bottom:none; }
+    .tag { display:inline-block; font-size:11px; padding:2px 6px; border-radius:999px; border:1px solid rgba(148,163,184,0.5); margin-left:4px; }
   </style>
 </head>
 <body>
@@ -57,30 +65,50 @@
   </header>
 
   <main>
+    <!-- LEFT: Map, weather, today + upcoming -->
     <section class="panel">
       <h2>Today’s overview</h2>
-      <div class="stats-grid">
-        <div class="stat"><strong>4</strong>Jobs today</div>
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat"><strong id="jobsTodayCount">0</strong>Jobs today</div>
         <div class="stat"><strong>2</strong>Crew online</div>
-        <div class="stat"><strong>7</strong>Open contracts</div>
+        <div class="stat"><strong id="openContractsCount">0</strong>Open contracts</div>
       </div>
 
       <h2 style="margin-top:20px;">Map & weather</h2>
       <div id="dashboard-map"></div>
       <div id="dashboard-weather" class="weather-line">Weather at map center: loading…</div>
 
-      <h2 style="margin-top:20px;">Upcoming jobs</h2>
-      <div class="job-list">
-        <div>• Oak removal — 9:00 AM</div>
-        <div>• Storm cleanup — 11:30 AM</div>
-        <div>• Pine trimming — 2:00 PM</div>
+      <h2 style="margin-top:20px;">Today’s jobs</h2>
+      <div class="job-list" id="todayJobsList">
+        <div style="font-size:13px;color:var(--text-soft);">No jobs scheduled for today yet.</div>
       </div>
     </section>
 
+    <!-- RIGHT: Tree of the day, search, tools, quick actions -->
     <section class="panel">
       <h2>Tree of the day</h2>
       <div class="tree-name" id="treeName">Loading…</div>
       <div id="treeDesc" style="font-size:14px;color:var(--text-soft);">Fetching species info…</div>
+
+      <h2 style="margin-top:20px;">Search trees</h2>
+      <div class="small-label">Search by common name or Latin name.</div>
+      <input id="treeSearchInput" class="input" placeholder="e.g. oak, pine, Quercus…" />
+      <div id="treeSearchResults" class="search-results"></div>
+
+      <h2 style="margin-top:20px;">Tools & parts lookup</h2>
+      <div class="small-label">Quickly look up chains, bars, ropes, rigging, etc.</div>
+      <input id="toolSearchInput" class="input" placeholder="e.g. 20\" bar, 3/8 chain, rigging rope…" />
+      <div style="display:flex; gap:8px; margin-bottom:8px;">
+        <button class="pill-btn-ghost" id="toolSearchStoresBtn">Search stores page</button>
+        <button class="pill-btn-ghost" id="toolSearchWebBtn">Search web</button>
+      </div>
+
+      <h2 style="margin-top:20px;">Quick actions</h2>
+      <div style="display:flex; flex-wrap:wrap; gap:8px; font-size:13px;">
+        <button class="pill-btn" id="quickNewContract">New contract</button>
+        <button class="pill-btn-ghost" id="quickOpenCalendar">Open calendar</button>
+        <button class="pill-btn-ghost" id="quickOpenStores">Open stores</button>
+      </div>
 
       <h2 style="margin-top:24px;">Crew online</h2>
       <div style="font-size:14px;color:var(--text-soft);">
@@ -108,18 +136,79 @@
       window.location.href = "index.html";
     };
 
-    // Tree of the day
+    // ---- Tree of the day ----
     const trees = [
-      { name: "Quercus alba", desc: "White oak — strong, long-lived, iconic canopy." },
-      { name: "Pinus taeda", desc: "Loblolly pine — fast-growing, common in the Southeast." },
-      { name: "Acer rubrum", desc: "Red maple — adaptable with vibrant fall color." },
-      { name: "Liquidambar styraciflua", desc: "Sweetgum — star-shaped leaves, dense wood." }
+      { name: "Quercus alba", common: "White oak", desc: "Strong, long-lived, iconic canopy. Excellent shade and structural presence." },
+      { name: "Pinus taeda", common: "Loblolly pine", desc: "Fast-growing pine common in the Southeast. Tall, straight, often used in timber." },
+      { name: "Acer rubrum", common: "Red maple", desc: "Adaptable with vibrant fall color. Often near homes and driveways." },
+      { name: "Liquidambar styraciflua", common: "Sweetgum", desc: "Star-shaped leaves, dense wood, notorious spiky seed pods." },
+      { name: "Quercus nigra", common: "Water oak", desc: "Common urban oak, often with limb drop and decay issues near structures." },
+      { name: "Pinus palustris", common: "Longleaf pine", desc: "Long needles, fire-adapted, historically dominant in the Southeast." }
     ];
     const pick = trees[Math.floor(Math.random() * trees.length)];
-    document.getElementById("treeName").textContent = pick.name;
+    document.getElementById("treeName").textContent = `${pick.common} (${pick.name})`;
     document.getElementById("treeDesc").textContent = pick.desc;
 
-    // Map + weather
+    // ---- Tree search ----
+    const treeSearchInput = document.getElementById("treeSearchInput");
+    const treeSearchResults = document.getElementById("treeSearchResults");
+
+    function renderTreeSearch(query) {
+      const q = query.trim().toLowerCase();
+      if (!q) {
+        treeSearchResults.innerHTML = "";
+        return;
+      }
+      const matches = trees.filter(t =>
+        t.name.toLowerCase().includes(q) ||
+        t.common.toLowerCase().includes(q)
+      );
+      if (!matches.length) {
+        treeSearchResults.innerHTML = "<div>No matching trees.</div>";
+        return;
+      }
+      treeSearchResults.innerHTML = "";
+      matches.forEach(t => {
+        const div = document.createElement("div");
+        div.innerHTML = `<strong>${t.common}</strong> <span class="tag">${t.name}</span><br/><span>${t.desc}</span>`;
+        treeSearchResults.appendChild(div);
+      });
+    }
+
+    treeSearchInput.addEventListener("input", (e) => {
+      renderTreeSearch(e.target.value);
+    });
+
+    // ---- Tools & parts lookup ----
+    const toolSearchInput = document.getElementById("toolSearchInput");
+    const toolSearchStoresBtn = document.getElementById("toolSearchStoresBtn");
+    const toolSearchWebBtn = document.getElementById("toolSearchWebBtn");
+
+    toolSearchStoresBtn.onclick = () => {
+      const q = toolSearchInput.value.trim();
+      // For now just go to stores page; later you can pass query via URL
+      window.location.href = "stores.html";
+    };
+
+    toolSearchWebBtn.onclick = () => {
+      const q = toolSearchInput.value.trim();
+      if (!q) return;
+      const url = `https://www.google.com/search?q=${encodeURIComponent("tree work " + q)}`;
+      window.open(url, "_blank");
+    };
+
+    // ---- Quick actions ----
+    document.getElementById("quickNewContract").onclick = () => {
+      window.location.href = "contract-form.html";
+    };
+    document.getElementById("quickOpenCalendar").onclick = () => {
+      window.location.href = "calendar.html";
+    };
+    document.getElementById("quickOpenStores").onclick = () => {
+      window.location.href = "stores.html";
+    };
+
+    // ---- Map + weather ----
     const mapApi = createTimberNovaMap2({
       containerId: "dashboard-map",
       defaultZoom: 12
@@ -138,6 +227,51 @@
         weatherEl.textContent = "Weather at map center: error fetching.";
       }
     })();
+
+    // ---- Today’s jobs + stats from calendar + contracts ----
+    const todayJobsList = document.getElementById("todayJobsList");
+    const jobsTodayCountEl = document.getElementById("jobsTodayCount");
+    const openContractsCountEl = document.getElementById("openContractsCount");
+
+    function loadCalendarEvents() {
+      try { return JSON.parse(localStorage.getItem("timberNovaCalendarEvents") || "[]"); }
+      catch { return []; }
+    }
+    function loadContracts() {
+      try { return JSON.parse(localStorage.getItem("timberNovaContracts") || "[]"); }
+      catch { return []; }
+    }
+
+    const events = loadCalendarEvents();
+    const contracts = loadContracts();
+
+    const openContracts = contracts.filter(c => c.status === "Draft" || c.status === "Sent" || c.status === "ClientSigned");
+    openContractsCountEl.textContent = openContracts.length.toString();
+
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+
+    const todaysEvents = events.filter(e => e.date === todayStr);
+    jobsTodayCountEl.textContent = todaysEvents.length.toString();
+
+    if (!todaysEvents.length) {
+      todayJobsList.innerHTML = `<div style="font-size:13px;color:var(--text-soft);">No jobs scheduled for today yet.</div>`;
+    } else {
+      todayJobsList.innerHTML = "";
+      todaysEvents.forEach(ev => {
+        const div = document.createElement("div");
+        div.textContent = `• ${ev.title}`;
+        div.style.cursor = "pointer";
+        div.onclick = () => {
+          if (ev.type === "contract" && ev.contractId) {
+            window.location.href = `contract-sign.html?id=${encodeURIComponent(ev.contractId)}&mode=view`;
+          } else {
+            window.location.href = "calendar.html";
+          }
+        };
+        todayJobsList.appendChild(div);
+      });
+    }
   </script>
 </body>
 </html>
