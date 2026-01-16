@@ -143,6 +143,23 @@
       });
 
       saveContracts(contracts);
+
+      /* -----------------------------------------
+         ADD TO CALENDAR
+      ----------------------------------------- */
+      const events = JSON.parse(localStorage.getItem("timberNovaCalendarEvents") || "[]");
+
+      events.push({
+        id,
+        title: `${clientName} — ${jobAddress}`,
+        date: dueDate,
+        type: "contract",
+        contractId: id
+      });
+
+      localStorage.setItem("timberNovaCalendarEvents", JSON.stringify(events));
+      /* ----------------------------------------- */
+
       statusMsg.textContent = "Contract saved.";
       setTimeout(() => {
         window.location.href = `contract-sign.html?id=${encodeURIComponent(id)}&mode=admin`;
