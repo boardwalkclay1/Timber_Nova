@@ -6,24 +6,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="styles.css" />
   <style>
-    body { margin:0; background:#020617; color:#f9fafb; font-family:system-ui,sans-serif; }
+    body { margin:0; background:#020617; color:#f9fafb; font-family:system-ui,sans-serif; display:flex; flex-direction:column; min-height:100vh; }
     header, footer { padding:16px 24px; background:rgba(2,6,23,0.9); border-bottom:1px solid rgba(148,163,184,0.3); display:flex; justify-content:space-between; align-items:center; }
     footer { border-top:1px solid rgba(148,163,184,0.3); border-bottom:none; margin-top:auto; }
     nav a { color:#9ca3af; text-decoration:none; margin-left:12px; font-size:14px; padding:6px 10px; border-radius:999px; }
     nav a:hover { background:rgba(148,163,184,0.2); color:#e5e7eb; }
-    main { padding:24px; max-width:1000px; margin:0 auto; }
+    main { padding:24px; max-width:1000px; margin:0 auto; flex:1; }
     h1 { font-size:22px; margin-bottom:8px; }
     .sub { color:#9ca3af; font-size:14px; margin-bottom:20px; }
     .contracts-list { margin-top:16px; border-radius:16px; border:1px solid rgba(148,163,184,0.3); background:rgba(15,23,42,0.9); padding:16px; }
-    .contract-item { padding:10px 0; border-bottom:1px solid rgba(148,163,184,0.25); display:flex; justify-content:space-between; align-items:center; font-size:14px; }
+    .contract-item { padding:10px 0; border-bottom:1px solid rgba(148,163,184,0.25); display:grid; grid-template-columns:2fr 1fr 1.4fr; gap:10px; align-items:center; font-size:14px; }
     .contract-item:last-child { border-bottom:none; }
-    .badge { font-size:11px; padding:3px 8px; border-radius:999px; border:1px solid rgba(148,163,184,0.5); }
-    .badge-open { border-color:#4ade80; color:#bbf7d0; }
-    .badge-scheduled { border-color:#38bdf8; color:#e0f2fe; }
-    .badge-complete { border-color:#a3a3a3; color:#e5e5e5; }
-    .new-contract { margin-top:20px; padding:16px; border-radius:16px; border:1px dashed rgba(148,163,184,0.5); background:rgba(15,23,42,0.7); }
-    .new-contract input, .new-contract textarea { width:100%; margin-top:6px; margin-bottom:10px; border-radius:10px; border:1px solid rgba(148,163,184,0.6); background:rgba(15,23,42,0.9); color:#e5e7eb; padding:8px 10px; font-size:13px; }
-    .new-contract button { border:none; border-radius:10px; padding:8px 14px; font-size:13px; background:linear-gradient(120deg,#22c55e,#4ade80); color:#022c22; cursor:pointer; }
+    .badge { font-size:11px; padding:3px 8px; border-radius:999px; border:1px solid rgba(148,163,184,0.5); display:inline-block; }
+    .badge-draft { border-color:#e5e7eb; color:#e5e7eb; }
+    .badge-sent { border-color:#38bdf8; color:#e0f2fe; }
+    .badge-clientsigned { border-color:#facc15; color:#fef9c3; }
+    .badge-complete { border-color:#4ade80; color:#bbf7d0; }
+    .actions button { border:none; border-radius:999px; padding:5px 10px; font-size:11px; margin-right:6px; cursor:pointer; }
+    .btn-primary { background:linear-gradient(120deg,#22c55e,#4ade80); color:#022c22; }
+    .btn-ghost { background:rgba(15,23,42,0.9); color:#e5e7eb; border:1px solid rgba(148,163,184,0.5); }
+    .new-contract { margin-top:20px; padding:16px; border-radius:16px; border:1px dashed rgba(148,163,184,0.5); background:rgba(15,23,42,0.7); font-size:14px; display:flex; justify-content:space-between; align-items:center; }
+    .new-contract button { border:none; border-radius:999px; padding:8px 14px; font-size:13px; background:linear-gradient(120deg,#22c55e,#4ade80); color:#022c22; cursor:pointer; }
+    @media (max-width:800px){ .contract-item{grid-template-columns:1.6fr 1fr; grid-template-rows:auto auto;} .actions{grid-column:1 / -1;} }
   </style>
 </head>
 <body>
@@ -43,16 +47,16 @@
 
   <main>
     <h1>Contracts</h1>
-    <div class="sub">Track open work, scheduled jobs, and completed contracts.</div>
+    <div class="sub">Draft, send, and track contracts with signatures and dates.</div>
 
     <div class="contracts-list" id="contractsList"></div>
 
     <div class="new-contract">
-      <strong>Create new contract</strong>
-      <div style="font-size:12px;color:#9ca3af;margin-top:4px;">Quick stub — later this can sync to a backend.</div>
-      <input id="cName" placeholder="Client / job name" />
-      <textarea id="cDetails" rows="3" placeholder="Scope, notes, location…"></textarea>
-      <button id="addContract">Add contract</button>
+      <div>
+        <strong>Create new contract</strong>
+        <div style="font-size:12px;color:#9ca3af;margin-top:4px;">Fill out a full contract with dates, price, and signatures.</div>
+      </div>
+      <button id="newContractBtn">New contract</button>
     </div>
   </main>
 
@@ -62,34 +66,107 @@
     if (!localStorage.getItem("timberNovaUser")) window.location.href = "index.html";
     document.getElementById("logout").onclick = () => { localStorage.removeItem("timberNovaUser"); window.location.href="index.html"; };
 
-    const contractsList = document.getElementById("contractsList");
-    let contracts = [
-      { name:"Oak removal — 14th St", status:"Open" },
-      { name:"Storm cleanup — Riverside", status:"Scheduled" },
-      { name:"Pine trim — Hillcrest", status:"Complete" }
-    ];
+    const listEl = document.getElementById("contractsList");
+    const newBtn = document.getElementById("newContractBtn");
+
+    function loadContracts() {
+      try {
+        return JSON.parse(localStorage.getItem("timberNovaContracts") || "[]");
+      } catch { return []; }
+    }
+
+    function saveContracts(contracts) {
+      localStorage.setItem("timberNovaContracts", JSON.stringify(contracts));
+    }
+
+    function statusBadgeClass(status) {
+      switch (status) {
+        case "Draft": return "badge badge-draft";
+        case "Sent": return "badge badge-sent";
+        case "ClientSigned": return "badge badge-clientsigned";
+        case "Complete": return "badge badge-complete";
+        default: return "badge badge-draft";
+      }
+    }
 
     function renderContracts() {
-      contractsList.innerHTML = "";
+      const contracts = loadContracts();
+      if (!contracts.length) {
+        listEl.innerHTML = "<div style='font-size:13px;color:#9ca3af;'>No contracts yet. Create one to get started.</div>";
+        return;
+      }
+      listEl.innerHTML = "";
       contracts.forEach(c => {
         const div = document.createElement("div");
         div.className = "contract-item";
-        const badgeClass = c.status === "Open" ? "badge badge-open" : c.status === "Scheduled" ? "badge badge-scheduled" : "badge badge-complete";
-        div.innerHTML = `<span>${c.name}</span><span class="${badgeClass}">${c.status}</span>`;
-        contractsList.appendChild(div);
+        const badgeCls = statusBadgeClass(c.status);
+        const created = new Date(c.createdAt).toLocaleDateString();
+        const due = c.dueDate ? new Date(c.dueDate).toLocaleDateString() : "—";
+        div.innerHTML = `
+          <div>
+            <strong>${c.clientName}</strong> — ${c.jobAddress}<br/>
+            <span style="font-size:12px;color:#9ca3af;">Created: ${created} • Due: ${due}</span>
+          </div>
+          <div><span class="${badgeCls}">${c.status}</span></div>
+          <div class="actions">
+            <button class="btn-ghost" data-open="${c.id}">Open</button>
+            <button class="btn-ghost" data-sign="${c.id}">Sign</button>
+            <button class="btn-primary" data-send="${c.id}">Send</button>
+          </div>
+        `;
+        listEl.appendChild(div);
+      });
+
+      listEl.querySelectorAll("[data-open]").forEach(btn => {
+        btn.onclick = () => {
+          const id = btn.getAttribute("data-open");
+          window.location.href = `contract-sign.html?id=${encodeURIComponent(id)}&mode=view`;
+        };
+      });
+      listEl.querySelectorAll("[data-sign]").forEach(btn => {
+        btn.onclick = () => {
+          const id = btn.getAttribute("data-sign");
+          window.location.href = `contract-sign.html?id=${encodeURIComponent(id)}&mode=admin`;
+        };
+      });
+      listEl.querySelectorAll("[data-send]").forEach(btn => {
+        btn.onclick = () => {
+          const id = btn.getAttribute("data-send");
+          const contracts = loadContracts();
+          const c = contracts.find(x => x.id === id);
+          if (!c) return;
+
+          c.status = "Sent";
+          saveContracts(contracts);
+
+          const subject = encodeURIComponent(`Tree work contract — ${c.jobAddress}`);
+          const body = encodeURIComponent(
+`Hi ${c.clientName},
+
+Your contract for tree work at:
+
+${c.jobAddress}
+
+Price: $${c.price}
+Job completion date: ${c.dueDate ? new Date(c.dueDate).toLocaleDateString() : "N/A"}
+
+You can review and sign your contract at the link provided by TimberNova.
+
+Thank you,
+TimberNova`
+          );
+          window.location.href = `mailto:${c.clientEmail}?subject=${subject}&body=${body}`;
+
+          renderContracts();
+        };
       });
     }
-    renderContracts();
 
-    document.getElementById("addContract").onclick = () => {
-      const name = document.getElementById("cName").value.trim();
-      const details = document.getElementById("cDetails").value.trim();
-      if (!name) return;
-      contracts.unshift({ name, status:"Open", details });
-      document.getElementById("cName").value = "";
-      document.getElementById("cDetails").value = "";
-      renderContracts();
+    newBtn.onclick = () => {
+      window.location.href = "contract-form.html";
     };
+
+    renderContracts();
   </script>
 </body>
 </html>
